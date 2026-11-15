@@ -42,7 +42,7 @@ export class RaceAudio {
     if (this.master && this.context) this.master.gain.setTargetAtTime(this.volume, this.context.currentTime, .03);
   }
   private loadQuacks() {
-    return this.loadingQuacks ||= Promise.allSettled(["cartoon", "natural", "playful"].map(async name => {
+    return this.loadingQuacks ||= Promise.allSettled(["boing", "giggle", "squeaky"].map(async name => {
       const ac = this.context; if (!ac) return;
       const response = await fetch(`/audio/quack-${name}.wav`); if (!response.ok) throw new Error("Quack unavailable");
       const buffer = await ac.decodeAudioData(await response.arrayBuffer()); this.quacks.push(buffer);
@@ -51,7 +51,7 @@ export class RaceAudio {
   private quack() {
     const ac = this.context; if (!ac || ac.state !== "running" || !this.master) return;
     if (!this.quacks.length) {
-      // A short formant-like call is a fallback while local recordings decode.
+      // A short formant-like call is a fallback while the toy-duck calls decode.
       [58, 55, 52].forEach((m, i) => this.tone(m, ac.currentTime + i * .065, .11, .12, "sawtooth", false)); return;
     }
     const choices = this.quacks.map((_, i) => i).filter(i => i !== this.lastQuack);

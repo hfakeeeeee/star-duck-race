@@ -8,6 +8,7 @@ import AnimatedStandings from "./animated-standings";
 import RaceHud from "./race-hud";
 import RaceResults from "./race-results";
 import { useRaceSound } from "./race-sound";
+import "./live-standings.css";
 export { formatClock } from "./race-hud";
 
 type Props = { room: PublicRoom; offset: number; ownId?: string; isHost: boolean; busy: boolean; onAction: (action: string, body?: Record<string, unknown>) => Promise<void>; onReact: (kind: string) => void; onError: (message: string) => void };
@@ -39,8 +40,8 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
     return () => clearInterval(timer);
   }, [replayRunning, speed, endAt]);
   useEffect(() => {
-    if (!sound || paused) { audio.stop(); return; }
-    audio.music(replay ? replayRunning ? "chill" : "ready" : ready || elapsed < 0 ? "ready" : winnerKnown ? "podium" : track);
+    if (!sound || paused || (!replay && !ready && elapsed < 0)) { audio.stop(); return; }
+    audio.music(replay ? replayRunning ? "chill" : "ready" : ready ? "ready" : winnerKnown ? "podium" : track);
   }, [audio, sound, track, paused, replay, replayRunning, ready, winnerKnown, elapsed >= 0]);
   useEffect(() => {
     const lead = live[0]?.id || "", previous = lastLeader.current; lastLeader.current = lead;

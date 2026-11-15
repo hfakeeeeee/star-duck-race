@@ -161,10 +161,18 @@ export default function RaceScene(props: Props) {
       const lookAt = new THREE.Vector3(), smoothLookAt = new THREE.Vector3(), desired = new THREE.Vector3(), projected = new THREE.Vector3(), transform = new THREE.Matrix4();
       const renderClock = new MotionClock(), epoch = Date.now() - performance.now();
       let lastFrame = performance.now();
-      let frame = 0, initialized = false, width = 1, height = 1, frames = 0, lastFps = performance.now();
+      let frame = 0, initialized = false, width = 1, height = 1, renderWidth = 1, renderHeight = 1, frames = 0, lastFps = performance.now();
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const resize = () => { width = node.clientWidth; height = node.clientHeight; renderer.setSize(width, height, false); camera.aspect = width / Math.max(1, height); camera.updateProjectionMatrix(); configureOverview(overview, camera.aspect, height); };
-      const observer = new ResizeObserver(resize); observer.observe(node); resize();
+      const resize = () => {
+        // Extend the river behind the glass without changing the main framing.
+        width = Math.max(1, node.parentElement!.clientWidth); height = Math.max(1, node.parentElement!.clientHeight);
+        renderWidth = Math.max(1, node.clientWidth); renderHeight = Math.max(1, node.clientHeight);
+        renderer.setSize(renderWidth, renderHeight, false);
+        camera.setViewOffset(width, height, 0, 0, renderWidth, renderHeight);
+        configureOverview(overview, width / height, height);
+        overview.setViewOffset(width, height, 0, 0, renderWidth, renderHeight);
+      };
+      const observer = new ResizeObserver(resize); observer.observe(node); observer.observe(node.parentElement!); resize();
       const laneIndex = new Map(race.lanes.map((id, i) => [id, i]));
       const zFor = (id: string) => ((laneIndex.get(id) || 0) / Math.max(1, room.count - 1) - .5) * Math.min(20, Math.max(4, (room.count - 1) * 2.2));
       let cachedRank: ReturnType<typeof standings> = [], rankTime = -100;
@@ -227,7 +235,7 @@ export default function RaceScene(props: Props) {
         room.players.forEach((p, i) => {
           const label = labels[i], place = picked.get(p.id); if (!showLabels || !place) { label.el.style.display = "none"; return; }
           projected.set(raceWorldX(raceProgress(race, p.id, elapsed)) - noseOffset, 2.1 + (p.id === winnerId ? flight.height : 0), zPositions[i]).project(activeCamera);
-          let x = (projected.x * .5 + .5) * width, y = (-projected.y * .5 + .5) * height;
+          let x = (projected.x * .5 + .5) * renderWidth, y = (-projected.y * .5 + .5) * renderHeight;
           const topLimit = height < 400 ? 90 : width < 600 ? 120 : 132, bottomLimit = height - (height < 400 ? 74 : 110);
           if (projected.z > 1 || x < 0 || x > width || y < topLimit || y > bottomLimit) { label.el.style.display = "none"; return; }
           const side = width < 600 ? 90 : 110;

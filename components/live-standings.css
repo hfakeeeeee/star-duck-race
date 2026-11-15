@@ -1,0 +1,38 @@
+/* One continuous scene and one frosted surface, including the mobile strip. */
+.viewport-app .race-stage .scene-wrap { overflow: visible; }
+.viewport-app .race-stage.rank-open .race-arena { --glass-width: 270px; --glass-height: 0px; }
+.viewport-app .race-stage .race-scene {
+  width: calc(100% + var(--glass-width, 0px));
+  height: calc(100% + var(--glass-height, 0px));
+}
+.viewport-app .race-stage .live-standings {
+  color: #f4f7ff;
+  background: #15264c;
+  border-color: rgb(229 239 255 / 28%);
+  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 12%), -8px 0 32px rgb(6 17 43 / 12%);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .viewport-app .race-stage .live-standings {
+    background: linear-gradient(145deg, rgb(39 61 102 / 67%), rgb(10 23 53 / 72%));
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+  }
+}
+.viewport-app .race-stage .standings-heading { background: transparent; border-color: rgb(255 255 255 / 16%); }
+.viewport-app .race-stage .standings-heading h2 { color: #f4f7ff; }
+.viewport-app .race-stage .standings-heading .icon-btn { color: #e1eaff; background: rgb(255 255 255 / 8%); border-color: rgb(255 255 255 / 16%); }
+.viewport-app .race-stage .standings-heading .icon-btn:hover { background: rgb(255 255 255 / 18%); }
+.viewport-app .race-stage .live-dot, .viewport-app .race-stage .standings-tail { color: #d0dcf1; }
+.viewport-app .race-stage .live-standings li { background: rgb(255 255 255 / 5%); border: 1px solid rgb(255 255 255 / 8%); }
+.viewport-app .race-stage .live-standings li.leading { background: rgb(255 211 106 / 17%); border-color: rgb(255 218 128 / 42%); }
+.viewport-app .race-stage .live-standings li.mine, .viewport-app .race-stage .my-live-place { background: rgb(181 215 255 / 15%); }
+.viewport-app .race-stage .live-standings .live-rank, .viewport-app .race-stage .my-live-place strong { color: #ffde8a; }
+.viewport-app .race-stage .live-standings .live-name, .viewport-app .race-stage .my-live-place > span:last-child { color: #f4f7ff; }
+.viewport-app .race-stage .live-standings .live-name small, .viewport-app .race-stage .my-live-place > span, .viewport-app .race-stage .my-live-place small { color: #d0dcf1; }
+.viewport-app .race-stage .live-standings .rank-move.up { color: #9ce8ca; }
+.viewport-app .race-stage .live-standings .rank-move.down { color: #ffd79b; }
+@media (max-width: 767px) {
+  .viewport-app .race-stage.rank-open .race-arena { --glass-width: 0px; --glass-height: 128px; }
+  .viewport-app .race-stage.rank-open .race-arena:has(.my-live-place) { --glass-height: 162px; }
+  .viewport-app .race-stage .live-standings { box-shadow: inset 0 1px 0 rgb(255 255 255 / 15%), 0 -8px 32px rgb(6 17 43 / 12%); }
+}

@@ -23,7 +23,7 @@ try{
   await page.evaluate(async url=>{const {RaceAudio}=await import(url||"/lib/race-audio.ts");window.__sounds=[];window.__themes=[];
     const cue=RaceAudio.prototype.cue,music=RaceAudio.prototype.music;
     RaceAudio.prototype.cue=function(kind){window.__sounds.push({kind,at:performance.now()});return cue.call(this,kind);};
-    RaceAudio.prototype.music=function(track){window.__themes.push(track);return music.call(this,track);};
+    RaceAudio.prototype.music=function(track){window.__engine=this;window.__themes.push(track);return music.call(this,track);};
   },audioModule);
   await page.getByLabel("Tên phòng").fill("STAR · Quack & khoảnh khắc chiến thắng");await page.getByLabel("Thời lượng cuộc đua",{exact:true}).fill("10");await page.getByLabel("Vịt thử nghiệm",{exact:true}).fill("23");
   await page.getByRole("button",{name:"Tạo phòng đua",exact:true}).click();await page.locator(".big-pin").waitFor();pin=(await page.locator(".big-pin").textContent()).trim();await page.waitForTimeout(600);
@@ -32,7 +32,18 @@ try{
   await page.screenshot({path:`${out}/lobby-music.png`,fullPage:true});
   await page.getByRole("button",{name:"Vào đường đua",exact:true}).click();await page.locator('.race-scene[data-renderer="webgl"]').waitFor();await page.waitForTimeout(600);
   assert.ok(await energy()>.0005,"Ready room must produce real audio");assert.ok(await page.evaluate(()=>window.__themes.includes("ready")));assert.equal(await page.evaluate(()=>window.__audio.length),1,"One shared AudioContext across phases");
-  await page.getByRole("button",{name:"Bắt đầu cuộc đua",exact:true}).click();await page.locator(".start-overlay").waitFor({state:"hidden"});
+  for(const viewport of [{width:1440,height:1000},{width:375,height:812}]){
+    await page.setViewportSize(viewport);await page.waitForTimeout(300);await noScroll();
+    const layout=await page.evaluate(()=>{const pane=document.querySelector('.live-standings'),scene=document.querySelector('.race-scene'),arena=document.querySelector('.race-arena'),css=getComputedStyle(pane);return {blur:css.backdropFilter,background:css.backgroundImage,canvas:scene.clientWidth,height:scene.clientHeight,arena:arena.clientWidth,arenaHeight:arena.clientHeight};});
+    assert.match(layout.blur,/blur/);assert.match(layout.background,/gradient/);assert.ok(Math.abs(layout.canvas-layout.arena)<=2);assert.ok(Math.abs(layout.height-layout.arenaHeight)<=2);
+    await page.screenshot({path:`${out}/live-glass-${viewport.width}.png`,fullPage:true});
+  }
+  await page.setViewportSize({width:1440,height:1000});
+  await page.getByRole("button",{name:"Bắt đầu cuộc đua",exact:true}).click();await page.locator(".start-overlay").waitFor();await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(()=>window.__engine.musicTimer),null,"Background scheduler must stop throughout countdown");
+  assert.ok(await page.evaluate(()=>window.__engine.musicBus.gain.value)<.001,"Countdown keeps music bus silent");
+  const themeCount=await page.evaluate(()=>window.__themes.length);await page.waitForTimeout(700);assert.equal(await page.evaluate(()=>window.__themes.length),themeCount,"No background track restarts between countdown ticks");
+  await page.locator(".start-overlay").waitFor({state:"hidden"});await page.waitForTimeout(150);assert.ok(await page.evaluate(()=>window.__engine.musicTimer!==null),"Race music resumes after countdown");
   await page.locator(".winner-announcement").waitFor({timeout:16000});assert.equal(await page.getByRole("dialog",{name:"Kết quả cuộc đua"}).count(),0,"Show the winner's jump before the results");
   await page.waitForTimeout(350);await page.screenshot({path:`${out}/winner-flight.png`,fullPage:true});
   await page.getByRole("dialog",{name:"Kết quả cuộc đua"}).waitFor();assert.equal(await page.locator(".podium-place").count(),3);

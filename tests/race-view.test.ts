@@ -38,3 +38,21 @@ test("follow views keep both banks horizontal and retain a fixed world up", () =
     assert.deepEqual(camera.up.toArray(), [0, 1, 0]);
   }
 });
+
+test("extending the river under glass preserves positions in the playable viewport", () => {
+  for (const [w, h, extraW, extraH] of [[1088, 668, 270, 0], [375, 410, 0, 128]]) {
+    const follow = new PerspectiveCamera(44, w / h, .1, 700), pose = followCameraPose(50, 0, w < 600);
+    follow.position.set(...pose.position); follow.lookAt(...pose.target); follow.updateMatrixWorld();
+    const overview = new OrthographicCamera(); configureOverview(overview, w / h, h);
+    for (const camera of [follow, overview]) {
+      const points = [new Vector3(50, 0, -8), new Vector3(55, 1, 8)];
+      const before = points.map(p => p.clone().project(camera)).map(p => [(p.x + 1) * w / 2, (1 - p.y) * h / 2]);
+      camera.setViewOffset(w, h, 0, 0, w + extraW, h + extraH);
+      points.forEach((p, i) => {
+        const projected = p.clone().project(camera);
+        assert.ok(Math.abs((projected.x + 1) * (w + extraW) / 2 - before[i][0]) < 1e-7);
+        assert.ok(Math.abs((1 - projected.y) * (h + extraH) / 2 - before[i][1]) < 1e-7);
+      });
+    }
+  }
+});
