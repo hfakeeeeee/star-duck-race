@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Copy, Flag, LockKeyhole, Maximize, Minimize, MonitorPlay, Play, Plus, QrCode, Search, ShieldCheck, SlidersHorizontal, Star, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Copy, Flag, LockKeyhole, Maximize, Minimize, MonitorPlay, Play, Plus, QrCode, Search, ShieldCheck, SlidersHorizontal, Star, Users, Volume2, VolumeX, X } from "lucide-react";
 import QRCode from "qrcode";
 import { SCENES, type PublicRoom, type SceneId, type SkinId } from "../lib/race";
 import Duck from "./duck";
@@ -9,6 +9,7 @@ import ImportPlayers from "./import-players";
 import Dialog from "./dialog";
 import RaceStage, { formatClock } from "./race-stage";
 import RoomSettings from "./room-settings";
+import { RaceSoundProvider, useRaceSound } from "./race-sound";
 import "./viewport-shell.css";
 
 type Membership = { token: string; playerId: string };
@@ -21,7 +22,9 @@ function Button({ children, className = "", ...props }: React.ButtonHTMLAttribut
 function Pill({ children, gold = false }: { children: ReactNode; gold?: boolean }) { return <span className={`pill ${gold ? "gold" : ""}`}>{children}</span>; }
 const roomStates: Record<string, string> = { waiting: "Phòng chờ", ready: "Chờ xuất phát", countdown: "Chuẩn bị xuất phát", paused: "Đã tạm dừng", racing: "Cuộc đua đang diễn ra", settling: "Đội vịt đang về đích", finished: "Đã về đích" };
 
-export default function DuckRaceApp() {
+export default function DuckRaceApp() { return <RaceSoundProvider><DuckRaceContent /></RaceSoundProvider>; }
+function DuckRaceContent() {
+  const { audio, sound, toggleSound } = useRaceSound();
   const [view, setView] = useState("loading"), [pin, setPin] = useState(""); const [room, setRoom] = useState<PublicRoom | null>(null);
   const [host, setHost] = useState(false), [admin, setAdmin] = useState<boolean | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null); const [name, setName] = useState(""); const [skin, setSkin] = useState<SkinId>("star");
@@ -32,6 +35,7 @@ export default function DuckRaceApp() {
   const [testCount, setTestCount] = useState(0), [settingsOpen, setSettingsOpen] = useState(false), [presentation, setPresentation] = useState(false), [roomsOpen, setRoomsOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const lastReact = useRef(0);
+  const lastPlayers = useRef<{ pin: string; ids: Set<string> }>({ pin: "", ids: new Set() });
   const readLocation = useCallback(() => {
     const params = new URLSearchParams(location.search), value = params.get("room") || "";
     setError(""); setRoom(null); setPin(value); setHost(params.get("host") === "1"); setView(value ? "room" : params.get("view") === "admin" ? "admin" : "join");
@@ -59,6 +63,14 @@ export default function DuckRaceApp() {
   }, [room?.pin]);
   useEffect(() => { const handle = () => setFullscreen(!!document.fullscreenElement); document.addEventListener("fullscreenchange", handle); return () => document.removeEventListener("fullscreenchange", handle); }, []);
   const active = !!room?.race, isHost = host && admin === true, own = room?.players.find(p => p.id === membership?.playerId);
+  const inWaitingRoom = view === "room" && room?.state === "waiting";
+  useEffect(() => { if (active) return; if (sound && inWaitingRoom) audio.music("lobby"); else audio.stop(); }, [audio, sound, active, inWaitingRoom]);
+  useEffect(() => {
+    if (!room) return;
+    const previous = lastPlayers.current;
+    if (sound && room.state === "waiting" && previous.pin === room.pin && room.players.some(p => !previous.ids.has(p.id))) audio.cue("join");
+    lastPlayers.current = { pin: room.pin, ids: new Set(room.players.map(p => p.id)) };
+  }, [room, audio, sound]);
   useEffect(() => { if (!active) setPresentation(false); }, [active]);
   useEffect(() => { if (!presentation) return; const escape = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[role="dialog"]')) setPresentation(false); }; window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape); }, [presentation]);
   async function run(fn: () => Promise<void>) { setBusy(true); setError(""); try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); } }
@@ -88,7 +100,7 @@ export default function DuckRaceApp() {
     <p className="form-footnote"><Users size={15} /> Tối đa 200 người trong một phòng</p>
   </form>;
 
-  return <div className={`app-shell viewport-app ${active ? "race-mode" : ""} ${presentation ? "presentation-mode" : ""}`}><header className="site-header"><Brand /><div className="header-actions"><span className="mock-tag">Bản thử nghiệm</span>{view === "join" ? <button className="nav-link" onClick={() => navigate("admin")}><ShieldCheck size={17} /><span>Quản trị viên</span><ChevronRight size={15} /></button> : <button className="nav-link" onClick={() => navigate("join")}><ArrowLeft size={16} /><span>Trang tham gia</span></button>}</div></header>
+  return <div className={`app-shell viewport-app ${active ? "race-mode" : ""} ${presentation ? "presentation-mode" : ""}`}><header className="site-header"><Brand /><div className="header-actions"><span className="mock-tag">Bản thử nghiệm</span><button className="icon-btn" data-sound="silent" aria-label={sound ? "Tắt âm thanh" : "Bật âm thanh"} onClick={toggleSound}>{sound ? <Volume2 size={17} /> : <VolumeX size={17} />}</button>{view === "join" ? <button className="nav-link" onClick={() => navigate("admin")}><ShieldCheck size={17} /><span>Quản trị viên</span><ChevronRight size={15} /></button> : <button className="nav-link" onClick={() => navigate("join")}><ArrowLeft size={16} /><span>Trang tham gia</span></button>}</div></header>
     {view === "loading" && <main className="loading-page"><Duck skin="star" /><p>Đang chuẩn bị dòng sông…</p></main>}
     {view === "join" && <main className="home"><div className="home-intro"><Pill gold><span className="tiny-star">✦</span> Cùng STAR tạo nên khoảnh khắc</Pill><h1>Một đường đua.<br />Hàng trăm <span>bất ngờ.</span></h1><p>Chọn một cái tên, nhận một chú vịt.<br />Cùng bạn bè chờ đón người về đích đầu tiên!</p><div className="intro-meta"><span><Users size={17} /> 200 người cùng chơi</span><span><Flag size={17} /> Cơ hội ngang nhau</span></div><div className="home-river illustrated-river"><div className="river-waves" /><Duck skin="star" className="hero-duck hero-one" /><Duck skin="captain" className="hero-duck hero-two" /><Duck skin="rose" className="hero-duck hero-three" /><span className="river-caption">Cuộc vui sắp bắt đầu.</span><span className="little-spark s1">✦</span><span className="little-spark s2">✧</span></div></div><div className="home-form-wrap">{joinForm()}<div className="how-to"><span>01 <b>Nhập PIN</b></span><i /><span>02 <b>Chọn vịt</b></span><i /><span>03 <b>Cổ vũ!</b></span></div></div></main>}
 

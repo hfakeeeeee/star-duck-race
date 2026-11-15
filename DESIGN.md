@@ -68,3 +68,16 @@ Giữ nguyên ID cuộc đua khi xuất phát để camera, trình chiếu và l
 Admin có nút Về phòng chờ trước khi xuất phát; mọi người được giữ và phòng được mở khóa lại.
 Bảng hạng mặc định mở, kể cả trình chiếu; chỉ thu gọn khi người xem chủ động bấm.
 Desktop dành cột riêng cho bảng hạng, điện thoại dùng dải gọn ở dưới; HUD co theo chiều cao mặt sông thực tế.
+
+## Âm thanh và trao giải
+
+Dùng một AudioContext chung qua các bước để giữ âm lượng, nút tắt tiếng và tránh phát hai nền nhạc chồng nhau.
+Phòng chờ có nhạc lobby; màn chưa xuất phát có nhạc ready khác; cuộc đua dùng track đã chọn, trao giải dùng nền podium nhẹ.
+Có âm báo người mới vào và phản hồi bấm nút. Ba bản quack CC0 được lưu tại public/audio, ghi nguồn ở CREDITS.md.
+Mỗi lần HUD đổi người dẫn đầu khi đang đua phát một quack ngẫu nhiên; không lặp mẫu ngay liền nhau, không phát bù khi bật tiếng lại.
+Quán quân bật lên 1,3 giây sau khi mỏ chạm vạch, chỉ là hiệu ứng hiển thị, không đổi quỹ đạo hoặc thời gian cán đích.
+Âm chạm đích tách khỏi fanfare và tiếng vỗ tay khi bảng top 3 xuất hiện.
+Bảng xuất hiện sau cú bật và khi ba vịt đầu đã cán đích (hoặc cả hai nếu phòng chỉ có hai vịt); các vịt còn lại tiếp tục phía sau.
+Bảng dùng liquid glass navy/gold, một lớp blur có fallback nền tối, thẻ thứ nhất ở giữa; giữ đọc được tên và thời gian trên nền đua.
+Nút đua lại chỉ bật khi toàn bộ lượt đã kết thúc. Xem lại, CSV/PNG và bảng đầy đủ vẫn hoạt động.
+Giảm chuyển động tắt cú bật và hiệu ứng mở bảng; tắt tiếng áp dụng cho nhạc, quack và các hiệu ứng cùng lúc.

@@ -53,6 +53,7 @@ try {
   const renderer = await page.locator(".race-scene").getAttribute("data-renderer"); assert.equal(renderer, "webgl"); mark("Camera, bảng hạng, âm thanh và cổ vũ hoạt động; khổ 375px không tràn");
   await page.locator(".results-heading h2").waitFor({ timeout: 45000 }); await phone.locator(".results-heading h2").waitFor();
   assert.equal(await page.locator(".results-heading h2").textContent(), await phone.locator(".results-heading h2").textContent());
+  await page.waitForFunction(() => [...document.querySelectorAll("button")].some(b => b.textContent.trim() === "Đua lại" && !b.disabled));
   const done = await getRoom(pin); assert.equal(done.state, "finished"); assert.equal(done.race.order.length, 16); assert.equal(Object.keys(done.race.finishes).length, 16);
   const times = done.race.order.map(id => done.race.finishes[id]); assert.equal(times[0], 20); assert.ok(times.at(-1) <= 28.000001);
   const winner = await phone.locator(".results-heading h2").textContent(); await phone.reload(); await phone.locator(".results-heading h2").waitFor(); assert.equal(await phone.locator(".results-heading h2").textContent(), winner); mark("Tất cả 16 vịt cán đích với thời gian riêng, hai máy cùng kết quả sau tải lại");

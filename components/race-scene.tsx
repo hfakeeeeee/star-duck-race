@@ -5,6 +5,7 @@ import { raceElapsed, raceProgress, SKINS, standings, type PublicRoom } from "..
 import { MotionClock, dampFactor } from "../lib/motion";
 import { createRiverWater, riverHeight } from "../lib/river-water";
 import { configureOverview, followCameraPose, raceWorldX, TRACK_LENGTH } from "../lib/race-view";
+import { winnerLift } from "../lib/celebration";
 
 export type CameraMode = "follow" | "overview" | "mine";
 export type Quality = "auto" | "low";
@@ -180,6 +181,8 @@ export default function RaceScene(props: Props) {
         river.time.value = animationTime;
         if (Math.abs(elapsed - rankTime) > .12 || !cachedRank.length) { cachedRank = standings(current.current.room, elapsed); rankTime = elapsed; }
         const lead = cachedRank[0];
+        const winnerId = elapsed >= race.duration ? activeRace.order[0] || lead?.id : undefined;
+        const flight = winnerLift(elapsed - race.duration, reduced);
         const focalId = mode === "mine" && ownId && indexes.has(ownId) ? ownId : lead?.id;
         const pack = cachedRank.slice(0, 5);
         const leadX = focalId ? raceWorldX(raceProgress(race, focalId, elapsed)) : 0;
@@ -198,17 +201,18 @@ export default function RaceScene(props: Props) {
           const launch = 1 - Math.exp(-Math.max(0, elapsed) * 2);
           const progress = raceProgress(race, p.id, elapsed), x = raceWorldX(progress) - 1.13 * size, z = zFor(p.id) + Math.sin(elapsed * .6 + (race.seeds[p.id] % 9)) * .1 * launch;
           const swell = riverHeight(x, z, animationTime);
-          zPositions[i] = z; dummy.position.set(x, swell + .075, z);
-          dummy.scale.setScalar(size);
+          const lift = p.id === winnerId ? flight.height : 0;
+          zPositions[i] = z; dummy.position.set(x, swell + .075 + lift, z);
+          dummy.scale.setScalar(size * (p.id === winnerId ? flight.scale : 1));
           const pitch = (riverHeight(x + .3, z, animationTime) - riverHeight(x - .3, z, animationTime)) / .6;
           const roll = (riverHeight(x, z + .3, animationTime) - riverHeight(x, z - .3, animationTime)) / .6;
-          dummy.rotation.set(roll * .55 * launch, Math.sin(animationTime * .9 + i) * .025 * launch, pitch * .55 * launch);
+          dummy.rotation.set(roll * .55 * launch, Math.sin(animationTime * .9 + i) * .025 * launch, pitch * .55 * launch + (p.id === winnerId ? flight.tilt : 0));
           rootMatrices[i].compose(dummy.position, dummy.quaternion, dummy.scale);
           const velocity = (raceProgress(race, p.id, elapsed + .04) - progress) * LENGTH / .04;
           for (let j = 0; j < 2; j++) {
             const wx = x - .8 - j * .75, spread = 1 + j * .65;
             dummy.position.set(wx, riverHeight(wx, z, animationTime) + .045, z);
-            dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.scale.set((1.4 + Math.min(1, velocity * .08)) * spread, .85 * spread, 1); dummy.updateMatrix(); wake.setMatrixAt(i * 2 + j, dummy.matrix);
+            dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.scale.set((1.4 + Math.min(1, velocity * .08)) * spread, lift > .2 ? 0 : .85 * spread, 1); dummy.updateMatrix(); wake.setMatrixAt(i * 2 + j, dummy.matrix);
           }
         });
         parts.forEach(p => { p.players.forEach((idx, j) => { transform.multiplyMatrices(rootMatrices[idx], p.local); p.mesh.setMatrixAt(j, transform); }); p.mesh.instanceMatrix.needsUpdate = true; });
@@ -222,7 +226,7 @@ export default function RaceScene(props: Props) {
         const boxes: { x: number; y: number }[] = [];
         room.players.forEach((p, i) => {
           const label = labels[i], place = picked.get(p.id); if (!showLabels || !place) { label.el.style.display = "none"; return; }
-          projected.set(raceWorldX(raceProgress(race, p.id, elapsed)) - noseOffset, 2.1, zPositions[i]).project(activeCamera);
+          projected.set(raceWorldX(raceProgress(race, p.id, elapsed)) - noseOffset, 2.1 + (p.id === winnerId ? flight.height : 0), zPositions[i]).project(activeCamera);
           let x = (projected.x * .5 + .5) * width, y = (-projected.y * .5 + .5) * height;
           const topLimit = height < 400 ? 90 : width < 600 ? 120 : 132, bottomLimit = height - (height < 400 ? 74 : 110);
           if (projected.z > 1 || x < 0 || x > width || y < topLimit || y > bottomLimit) { label.el.style.display = "none"; return; }

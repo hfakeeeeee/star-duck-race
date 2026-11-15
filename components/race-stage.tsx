@@ -1,29 +1,26 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Download, Eye, ImageDown, Pause, Play, RotateCcw, SkipForward, SlidersHorizontal, Trophy, Volume2, VolumeX, X } from "lucide-react";
+import { Camera, Pause, Play, SkipForward, SlidersHorizontal, Trophy, Volume2, VolumeX, X } from "lucide-react";
 import { finishTime, raceElapsed, standings, type PublicRoom } from "../lib/race";
-import { RaceAudio } from "../lib/race-audio";
-import { exportCSV, exportPNG } from "../lib/export-results";
-import Duck from "./duck";
 import RaceScene, { type CameraMode, type Quality } from "./race-scene";
 import Dialog from "./dialog";
 import AnimatedStandings from "./animated-standings";
 import RaceHud from "./race-hud";
+import RaceResults from "./race-results";
+import { useRaceSound } from "./race-sound";
 export { formatClock } from "./race-hud";
 
 type Props = { room: PublicRoom; offset: number; ownId?: string; isHost: boolean; busy: boolean; onAction: (action: string, body?: Record<string, unknown>) => Promise<void>; onReact: (kind: string) => void; onError: (message: string) => void };
-const seconds = (s: number) => `${s.toFixed(3)} s`;
 export default function RaceStage({ room, offset, ownId, isHost, busy, onAction, onReact, onError }: Props) {
   const race = room.race!, ready = race.ready === true;
   const [now, setNow] = useState(Date.now()); const [camera, setCamera] = useState<CameraMode>("follow");
-  const [quality, setQuality] = useState<Quality>("auto"); const [labels, setLabels] = useState(true); const [sound, setSound] = useState(true);
-  const [volume, setVolume] = useState(.35); const [track, setTrack] = useState("bright");
-  const [ranking, setRanking] = useState(false); const [finishConfirm, setFinishConfirm] = useState(false); const [audioSettings, setAudioSettings] = useState(false);
+  const [quality, setQuality] = useState<Quality>("auto"); const [labels, setLabels] = useState(true);
+  const { audio, sound, volume, track, toggleSound, setVolume, setTrack } = useRaceSound();
+  const [finishConfirm, setFinishConfirm] = useState(false); const [audioSettings, setAudioSettings] = useState(false);
   const [boardOpen, setBoardOpen] = useState(true), [resultsOpen, setResultsOpen] = useState(true);
   const [replay, setReplay] = useState(false); const [replayTime, setReplayTime] = useState(0); const [replayRunning, setReplayRunning] = useState(false); const [speed, setSpeed] = useState(.5);
   const [replaySeek, setReplaySeek] = useState(0);
-  const audio = useRef<RaceAudio | null>(null); const cue = useRef(""); const lastLeader = useRef(""); const lastLeaderCue = useRef(0);
-  const wantsSound = useRef(sound); wantsSound.current = sound;
+  const cue = useRef(""); const lastLeader = useRef("");
   const elapsed = raceElapsed(race, now + offset); const endAt = race.duration + race.tail;
   const finished = elapsed >= endAt - .000001; const winnerKnown = elapsed >= race.duration; const paused = race.pausedAt !== null;
   const displayElapsed = replay ? replayTime : Math.min(endAt, elapsed);
@@ -31,38 +28,31 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
   const live = useMemo(() => standings(room, displayElapsed), [room, displayElapsed]);
   const completed = live.filter(p => p.finish <= displayElapsed).length;
   const winnerId = room.race?.order[0] || (winnerKnown ? live[0]?.id : ""); const winner = room.players.find(p => p.id === winnerId);
+  const podiumOrder = race.order.slice(0, 3);
+  const podiumAt = Math.max(race.duration + 1.4, ...podiumOrder.map(id => finishTime(race, id)));
+  const podiumReady = winnerKnown && podiumOrder.length > 0 && elapsed >= podiumAt - .000001;
   const myPlace = live.findIndex(p => p.id === ownId);
-  useEffect(() => {
-    const engine = audio.current ||= new RaceAudio();
-    const unlock = () => { if (wantsSound.current) void engine.unlock(); };
-    unlock();
-    window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
-    window.addEventListener("keydown", unlock, true);
-    return () => { window.removeEventListener("pointerdown", unlock, true); window.removeEventListener("keydown", unlock, true); engine.dispose(); };
-  }, []);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 100); return () => clearInterval(timer); }, []);
   useEffect(() => {
     if (!replayRunning) return; let last = performance.now();
     const timer = setInterval(() => { const now = performance.now(); const delta = (now - last) / 1000 * speed; last = now; setReplayTime(t => { const next = Math.min(endAt, t + delta); if (next >= endAt) setReplayRunning(false); return next; }); }, 50);
     return () => clearInterval(timer);
   }, [replayRunning, speed, endAt]);
-  useEffect(() => { audio.current?.setVolume(volume); }, [volume]);
   useEffect(() => {
-    if (sound && !finished && !paused && !replay && elapsed >= 0) audio.current?.music(track); else audio.current?.stop();
-  }, [sound, track, finished, paused, replay, elapsed >= 0]);
+    if (!sound || paused) { audio.stop(); return; }
+    audio.music(replay ? replayRunning ? "chill" : "ready" : ready || elapsed < 0 ? "ready" : winnerKnown ? "podium" : track);
+  }, [audio, sound, track, paused, replay, replayRunning, ready, winnerKnown, elapsed >= 0]);
   useEffect(() => {
+    const lead = live[0]?.id || "", previous = lastLeader.current; lastLeader.current = lead;
     if (!sound || replay || paused || ready) return;
     const value = countdown ? `count-${countdown}` : winnerKnown ? "winner" : "";
-    if (value && cue.current !== value) { cue.current = value; audio.current?.cue(winnerKnown ? "win" : "countdown"); }
-    const lead = live[0]?.id;
-    if (lead !== lastLeader.current && !winnerKnown && elapsed > 1 && Date.now() - lastLeaderCue.current > 1600) { audio.current?.cue("leader"); lastLeaderCue.current = Date.now(); }
-    lastLeader.current = lead;
+    if (value && cue.current !== value) {
+      cue.current = value;
+      if (!winnerKnown) audio.cue("countdown");
+      else if (!race.endedEarly && elapsed < race.duration + 1.2) audio.cue("win");
+    }
+    if (previous && lead !== previous && !winnerKnown && elapsed > 0) audio.cue("leader");
   }, [countdown, winnerKnown, live[0]?.id, sound, replay, paused, ready]);
-  function toggleSound() {
-    if (!sound) { audio.current ||= new RaceAudio(); void audio.current.unlock(); audio.current.setVolume(volume); }
-    else audio.current?.stop();
-    setSound(!sound);
-  }
   useEffect(() => {
     const keydown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -75,11 +65,12 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
   function beginReplay() { setReplaySeek(v => v + 1); setReplay(true); setReplayTime(Math.max(0, race.duration - 5)); setReplayRunning(true); }
 
   return <section className={`race-stage ${finished ? "is-finished" : ""} ${boardOpen ? "rank-open" : ""}`}>
-    <div className="race-command-bar"><div className="camera-switch" aria-label="Góc máy"><Camera size={16} />{([['follow', 'Theo dẫn đầu'], ['overview', 'Toàn cảnh'], ...(ownId ? [['mine', 'Vịt của tôi']] : [])] as [CameraMode, string][]).map(([value, label]) => <button key={value} aria-pressed={camera === value} className={camera === value ? "selected" : ""} onClick={() => setCamera(value)}>{label}</button>)}</div><div className="scene-options"><button className="btn standings-toggle" aria-expanded={boardOpen} onClick={() => setBoardOpen(!boardOpen)}><Trophy size={16} /> Bảng hạng</button>{finished && <button className="btn" onClick={() => setResultsOpen(true)}>Kết quả</button>}<button className="icon-btn" onClick={toggleSound} aria-label={sound ? "Tắt âm thanh" : "Bật âm thanh"}>{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button className="icon-btn" aria-label="Cài đặt cuộc đua" onClick={() => setAudioSettings(true)}><SlidersHorizontal size={17} /></button></div></div>
+    <div className="race-command-bar"><div className="camera-switch" aria-label="Góc máy"><Camera size={16} />{([['follow', 'Theo dẫn đầu'], ['overview', 'Toàn cảnh'], ...(ownId ? [['mine', 'Vịt của tôi']] : [])] as [CameraMode, string][]).map(([value, label]) => <button key={value} aria-pressed={camera === value} className={camera === value ? "selected" : ""} onClick={() => setCamera(value)}>{label}</button>)}</div><div className="scene-options"><button className="btn standings-toggle" aria-expanded={boardOpen} onClick={() => setBoardOpen(!boardOpen)}><Trophy size={16} /> Bảng hạng</button>{podiumReady && <button className="btn" onClick={() => setResultsOpen(true)}>Kết quả</button>}<button className="icon-btn" data-sound="silent" onClick={toggleSound} aria-label={sound ? "Tắt âm thanh" : "Bật âm thanh"}>{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button className="icon-btn" aria-label="Cài đặt cuộc đua" onClick={() => setAudioSettings(true)}><SlidersHorizontal size={17} /></button></div></div>
     {audioSettings && <Dialog title="Cài đặt cuộc đua" onClose={() => setAudioSettings(false)}><div className="race-settings-form"><label htmlFor="race-quality">Chất lượng đồ họa</label><select id="race-quality" value={quality} onChange={e => setQuality(e.target.value as Quality)}><option value="auto">Đồ họa tự động</option><option value="low">Đồ họa nhẹ</option></select><label className="label-toggle"><input type="checkbox" checked={labels} onChange={e => setLabels(e.target.checked)} /> Bảng tên</label><label htmlFor="music-volume">Âm lượng · {Math.round(volume * 100)}%</label><input id="music-volume" aria-label="Âm lượng" type="range" min="0" max="1" step=".05" value={volume} onChange={e => setVolume(Number(e.target.value))} /><label htmlFor="music-track">Nhạc nền</label><select id="music-track" value={track} onChange={e => setTrack(e.target.value)}><option value="bright">Ngày hội STAR</option><option value="chill">Groove bên dòng sông</option></select><p className="muted">Space: tạm dừng · M: âm thanh · Esc: đóng</p></div></Dialog>}
 
     <div className={`race-arena ${room.scene === "night" ? "night-arena" : ""}`}><div className="scene-wrap"><RaceScene room={room} elapsed={displayElapsed} ownId={ownId} camera={camera} quality={quality} labels={labels} offset={offset} replay={replay} seek={replaySeek} rate={replay ? replayRunning ? speed : 0 : ready || paused || finished ? 0 : 1} />
       <RaceHud room={room} players={live} elapsed={displayElapsed} ownId={ownId} replay={replay} paused={paused} />
+      {winnerKnown && winner && !podiumReady && !replay && <div className="winner-announcement"><Trophy size={19} /><span>Về đích đầu tiên<strong>{winner.name}</strong></span></div>}
       {ready && <div className="race-ready-controls" role="status"><span>{isHost ? "Sẵn sàng khi bạn muốn" : "Chờ admin phát lệnh xuất phát"}</span>{isHost && <div><button className="btn" disabled={busy} onClick={() => void onAction("unprepare")}>Về phòng chờ</button><button className="btn primary launch-race" disabled={busy} onClick={() => void onAction("start")}><Play size={16} fill="currentColor" />{busy ? "Đang bắt đầu…" : "Bắt đầu cuộc đua"}</button></div>}</div>}
       {countdown > 0 && !replay && <div className="start-overlay"><span>Đội vịt đã vào vị trí</span><strong key={countdown}>{countdown}</strong><span>Sẵn sàng cùng STAR!</span></div>}
       {paused && !replay && <div className="pause-overlay"><Pause size={36} /><strong>Cuộc đua đang tạm dừng</strong><span>Đồng hồ và vị trí được giữ cho cả phòng.</span></div>}
@@ -93,10 +84,7 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
 
     {replay && <div className="replay-controls"><button className="icon-btn" aria-label={replayRunning ? "Tạm dừng xem lại" : "Phát xem lại"} onClick={() => { if (replayTime >= endAt) { setReplaySeek(v => v + 1); setReplayTime(0); } setReplayRunning(!replayRunning); }}>{replayRunning ? <Pause size={17} /> : <Play size={17} />}</button><label htmlFor="replay-position">{displayElapsed.toFixed(1)} s</label><input id="replay-position" aria-label="Vị trí xem lại" type="range" min="0" max={endAt} step=".05" value={replayTime} onChange={e => { setReplayRunning(false); setReplaySeek(v => v + 1); setReplayTime(Number(e.target.value)); }} /><select aria-label="Tốc độ xem lại" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value={.25}>¼×</option><option value={.5}>½×</option><option value={1}>1×</option></select><button className="btn" onClick={() => { setReplay(false); setReplayRunning(false); }}>Đóng xem lại</button></div>}
 
-    {finished && winner && resultsOpen && !replay && <Dialog title="Kết quả cuộc đua" onClose={() => setResultsOpen(false)} wide><div className="results"><div className="results-heading"><span className="pill gold"><Trophy size={15} /> Khoảnh khắc về đích</span><h2>Xin chúc mừng, {winner.name}!</h2><p>{room.count} chú vịt, một cuộc đua đáng nhớ. Hẹn bạn ở lượt tiếp theo!</p></div><div className="podium">{race.order.slice(0, 3).map((id, i) => { const p = room.players.find(p => p.id === id)!; return <div className={`podium-place place-${i + 1}`} key={id}><span className="podium-number">{i === 0 ? <Trophy size={24} /> : `0${i + 1}`}</span><Duck skin={p.skin} /><strong>{p.name}</strong><span>Hạng {i + 1}{id === ownId ? " · Bạn" : ""}</span><b className="podium-time">{seconds(finishTime(race, id))}</b></div>; })}</div>
-      <div className="results-actions"><button className="btn" onClick={() => setRanking(!ranking)}>{ranking ? "Thu gọn bảng xếp hạng" : "Xem toàn bộ xếp hạng"}</button><button className="btn" onClick={beginReplay}><Eye size={16} /> Xem lại về đích</button><button className="btn" onClick={() => exportCSV(room)}><Download size={16} /> Tải kết quả CSV</button><button className="btn" onClick={() => exportPNG(room).catch(e => onError(e.message))}><ImageDown size={16} /> Tải ảnh kết quả</button>{isHost && <button className="btn primary" disabled={busy || replay} onClick={() => void onAction("reset")}><RotateCcw size={16} /> Đua lại</button>}</div>{isHost && <button className="remove-winner-link" disabled={busy || replay} onClick={() => void onAction("reset", { removeWinner: true })}>Loại người thắng và đua lại</button>}
-      {ranking && <div className="final-table-wrap"><table className="final-table"><thead><tr><th>Hạng</th><th>Người chơi</th><th>Thời gian</th><th>Chênh lệch</th></tr></thead><tbody>{race.order.map((id, i) => { const p = room.players.find(p => p.id === id)!; return <tr key={id} className={id === ownId ? "mine" : ""}><td>{i + 1}</td><td><span><Duck skin={p.skin} /><strong>{p.name}</strong>{id === ownId && <small>Bạn</small>}</span></td><td>{seconds(finishTime(race, id))}</td><td>{i ? `+${seconds(finishTime(race, id) - race.duration)}` : "—"}</td></tr>; })}</tbody></table></div>}
-    </div></Dialog>}
+    {podiumReady && winner && resultsOpen && !replay && !audioSettings && !finishConfirm && <RaceResults room={room} ownId={ownId} finished={finished} completed={completed} isHost={isHost} busy={busy} onClose={() => setResultsOpen(false)} onReplay={beginReplay} onReset={removeWinner => void onAction("reset", { removeWinner: !!removeWinner })} onError={onError} />}
     {finishConfirm && <Dialog title="Kết thúc cuộc đua ngay?" onClose={() => setFinishConfirm(false)}><p>Bỏ qua thời gian còn lại và hiển thị kết quả của lượt đua này cho cả phòng.</p><div className="modal-actions"><button className="btn" onClick={() => setFinishConfirm(false)}>Hủy</button><button className="btn primary" disabled={busy} onClick={() => { setFinishConfirm(false); void onAction("finish"); }}>Kết thúc cuộc đua</button></div></Dialog>}
   </section>;
 }

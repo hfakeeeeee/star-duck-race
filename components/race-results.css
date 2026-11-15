@@ -1,0 +1,78 @@
+.viewport-app .celebration-backdrop { background: #08152826; padding: 22px; }
+.winner-announcement { position: absolute; left: 50%; bottom: 128px; transform: translateX(-50%); z-index: 6; display: flex; gap: 10px; align-items: center; padding: 10px 16px; border-radius: 12px; border: 1px solid #e5c07888; background: #172b63e8; color: #ffe3a1; max-width: calc(100% - 24px); }
+.winner-announcement > span { font-size: 11px; min-width: 0; }
+.winner-announcement strong { display: block; font-size: 15px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewport-app .modal.celebration-modal {
+  width: min(900px,100%); max-width: 900px; padding: 24px; border-radius: 28px;
+  background: #13264ce8; color: #f8faff; border: 1px solid #ffffff70;
+  box-shadow: inset 0 1px 0 #ffffff90,inset 0 -1px 0 #ffffff20,0 24px 90px #020b2940;
+  animation: award-appear 600ms cubic-bezier(.18,.85,.25,1) both;
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .viewport-app .modal.celebration-modal { background: linear-gradient(135deg,#153365ad,#112349a6 55%,#132650b8); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); }
+}
+.viewport-app .modal.celebration-modal .modal-title { top: -24px; background: transparent; margin-bottom: 10px; }
+.viewport-app .celebration-modal .modal-title h2 { color: #d8e6fb; font-size: 12px; font-weight: 500; margin: 0; }
+.viewport-app .celebration-modal .icon-btn { background: #ffffff10; border-color: #ffffff30; color: white; }
+.award-eyebrow { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid #d2aa6150; border-radius: 99px; color: #ffe4a3; font-size: 11px; letter-spacing: 1.1px; background: #d2aa6112; }
+.viewport-app .celebration-modal .results-heading h2 { font-size: clamp(21px,2.5vw,31px); color: #fff0c7; margin: 12px 0 5px; line-height: 1.4; letter-spacing: -.6px; }
+.viewport-app .celebration-modal .results-heading p { color: #d3e0f4; font-size: 12px; }
+.viewport-app .celebration-modal .podium { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; align-items: end; max-width: 710px; margin: 26px auto 18px; }
+.viewport-app .celebration-modal .podium-place { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; max-width: none; margin: 0; min-width: 0; min-height: 215px; padding: 18px 12px; border-radius: 20px; background: #ffffff08; border: 1px solid #ffffff26; text-align: center; gap: 0; }
+.viewport-app .celebration-modal .place-1 { grid-column: 2; grid-row: 1; min-height: 252px; background: linear-gradient(155deg,#f0cd7126,#ffffff0a 60%); border-color: #e4c8818c; box-shadow: inset 0 1px 0 #ffe9b750; }
+.viewport-app .celebration-modal .place-2 { grid-column: 1; grid-row: 1; }
+.viewport-app .celebration-modal .place-3 { grid-column: 3; grid-row: 1; }
+.viewport-app .celebration-modal .awards-2 { grid-template-columns: repeat(2,minmax(0,1fr)); max-width: 480px; }
+.viewport-app .celebration-modal .award-duck { position: relative; display: grid; place-items: center; width: 94px; height: 94px; margin: 0 0 14px; border-radius: 50%; border: 1px solid #ffffff50; background: #ffffff0a; box-shadow: 0 0 0 6px #ffffff05; }
+.viewport-app .celebration-modal .place-1 .award-duck { width: 116px; height: 116px; border: 2px solid #ffe5a8; box-shadow: 0 0 0 7px #d2aa611a,0 0 0 14px #d2aa610a; }
+.viewport-app .celebration-modal .award-duck > .duck { width: 74px; margin: 0; }
+.viewport-app .celebration-modal .place-1 .award-duck > .duck { width: 90px; }
+.viewport-app .celebration-modal .podium-number { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 29px; height: 29px; padding: 0; border-radius: 50%; background: #d9e4f6; color: #172b63; border: 2px solid #193259; font-size: 15px; margin: 0; }
+.viewport-app .celebration-modal .place-1 .podium-number { background: #f4d17e; width: 34px; height: 34px; }
+.viewport-app .celebration-modal .place-3 .podium-number { background: #e0b393; }
+.award-place { color: #c5d4e9; font-size: 10px; letter-spacing: 1.2px; margin-bottom: 7px; }
+.place-1 .award-place { color: #ffe1a0; }
+.viewport-app .celebration-modal .podium-place > strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 14px; line-height: 1.4; color: #fff; min-height: 39px; width: 100%; margin: 0; }
+.viewport-app .celebration-modal .place-1 > strong { color: #fff0c7; font-size: 16px; min-height: 45px; }
+.viewport-app .celebration-modal .podium-time { color: #dce8fa; font-size: 12px; margin-top: 7px; font-weight: 500; }
+.award-meta { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; color: #d2dff1; font-size: 12px; margin: 15px 0 18px; }
+.award-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+.viewport-app .celebration-modal .results-actions { gap: 9px; }
+.viewport-app .celebration-modal .results-actions .btn { background: #11284e70; border-color: #ffffff35; color: #f5f8ff; min-height: 42px; font-size: 12px; }
+.viewport-app .celebration-modal .results-actions .btn.primary { background: #e5c078; color: #172b63; border-color: #ffe6a9; }
+.viewport-app .celebration-modal .results-actions .btn:hover:not(:disabled) { background: #ffffff20; }
+.viewport-app .celebration-modal .results-actions .btn.primary:hover:not(:disabled) { background: #f2d797; }
+.award-secondary { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 5px 20px; margin-top: 14px; }
+.award-secondary > button { display: inline-flex; gap: 6px; align-items: center; padding: 5px 0; border: 0; background: none; color: #d0dff2; font-size: 11px; }
+.award-secondary > button:hover:not(:disabled) { color: white; }
+.viewport-app .celebration-modal .award-settling { color: #e9d7ac; font-size: 11px; text-align: center; margin: 0 0 12px; }
+.viewport-app .celebration-modal .final-table { color: #f5f8ff; }
+.viewport-app .celebration-modal .final-table th { background: #0c214657; color: #d3e3fa; }
+.viewport-app .celebration-modal .final-table td { border-color: #ffffff20; }
+.viewport-app .celebration-modal .final-table td:first-child { color: #d0dff2; }
+.viewport-app .celebration-modal .final-table tr.mine { background: #d2aa6120; }
+@keyframes award-appear { from { opacity: 0; transform: translateY(22px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 767px) {
+  .viewport-app .celebration-backdrop { padding: 10px; }
+  .viewport-app .modal.celebration-modal { padding: 16px 12px; border-radius: 22px; }
+  .viewport-app .modal.celebration-modal .modal-title { top: -16px; }
+  .viewport-app .celebration-modal .results-heading h2 { font-size: 20px; }
+  .viewport-app .celebration-modal .podium { gap: 6px; margin-top: 23px; margin-bottom: 12px; }
+  .viewport-app .celebration-modal .podium-place { padding: 12px 5px; border-radius: 13px; min-height: 185px; }
+  .viewport-app .celebration-modal .place-1 { min-height: 207px; }
+  .viewport-app .celebration-modal .award-duck { width: 64px; height: 64px; margin-bottom: 12px; }
+  .viewport-app .celebration-modal .place-1 .award-duck { width: 76px; height: 76px; }
+  .viewport-app .celebration-modal .award-duck > .duck { width: 52px; }
+  .viewport-app .celebration-modal .place-1 .award-duck > .duck { width: 64px; }
+  .viewport-app .celebration-modal .podium-number { width: 24px; height: 24px; font-size: 12px; }
+  .viewport-app .celebration-modal .place-1 .podium-number { width: 28px; height: 28px; }
+  .viewport-app .celebration-modal .podium-place > strong, .viewport-app .celebration-modal .place-1 > strong { font-size: 11px; min-height: 32px; }
+  .award-place { font-size: 8px; letter-spacing: .3px; }
+  .viewport-app .celebration-modal .podium-time { font-size: 10px; }
+  .award-meta { gap: 8px 14px; font-size: 10px; }
+  .viewport-app .celebration-modal .results-actions .btn { min-width: 0; padding: 8px 10px; font-size: 11px; }
+  .award-secondary { gap: 4px 14px; margin-top: 12px; }
+  .award-secondary > button { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .viewport-app .modal.celebration-modal { animation: none; } }
+@container race-view (max-height: 400px) { .winner-announcement { bottom: 76px; padding: 7px 12px; } }

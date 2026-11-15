@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
-export default function Dialog({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
+export default function Dialog({ title, children, onClose, wide = false, variant = "default" }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean; variant?: "default" | "celebration" }) {
   const ref = useRef<HTMLElement>(null); const close = useRef(onClose); close.current = onClose;
   useEffect(() => {
     const before = document.activeElement as HTMLElement; const old = document.body.style.overflow; document.body.style.overflow = "hidden";
@@ -12,5 +12,5 @@ export default function Dialog({ title, children, onClose, wide = false }: { tit
     };
     document.addEventListener("keydown", key); return () => { document.removeEventListener("keydown", key); document.body.style.overflow = old; before?.focus(); };
   }, []);
-  return <div className="modal-backdrop" onClick={onClose}><section ref={ref} className={`modal ${wide ? "wide-modal" : ""}`} role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}><div className="modal-title"><h2>{title}</h2><button className="icon-btn" aria-label="Đóng" onClick={onClose}><X size={18} /></button></div>{children}</section></div>;
+  return <div className={`modal-backdrop ${variant === "celebration" ? "celebration-backdrop" : ""}`} onClick={onClose}><section ref={ref} className={`modal ${wide ? "wide-modal" : ""} ${variant === "celebration" ? "celebration-modal" : ""}`} role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}><div className="modal-title"><h2>{title}</h2><button className="icon-btn" aria-label="Đóng" onClick={onClose}><X size={18} /></button></div>{children}</section></div>;
 }
