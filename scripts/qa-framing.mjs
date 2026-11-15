@@ -28,7 +28,7 @@ try {
   await page.goto(`${origin}/signin-with-chatgpt?return_to=/%3Fview%3Dadmin`); await page.getByLabel("Tên phòng").waitFor();
   const room = await post("rooms", { title: "STAR · Góc máy và bố cục mới", duration: 30, distance: 600 });
   await post(`rooms/${room.pin}/import`, { names: ["Trang", "Huy", "Tour Huế · Cố đô 2 ngày 1 đêm"] });
-  await page.goto(`${origin}/?room=${room.pin}&host=1`); await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
+  await page.goto(`${origin}/?room=${room.pin}&host=1`); await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Vào đường đua", exact: true }).click(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
   await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
   const veil = await page.addStyleTag({ content: ".start-overlay,.pause-overlay { visibility:hidden!important }" });
   await shot("start-follow", "Theo dẫn đầu"); await shot("start-overview", "Toàn cảnh"); await checkLayout("desktop-grid");
@@ -46,13 +46,13 @@ try {
   await shot("replay-zero-follow", "Theo dẫn đầu"); await shot("replay-zero-overview", "Toàn cảnh"); await checkLayout("replay-desktop");
   await page.getByLabel("Vị trí xem lại", { exact: true }).fill("30"); await shot("replay-finish-overview", "Toàn cảnh");
   await page.getByRole("button", { name: "Đóng xem lại", exact: true }).click(); await post(`rooms/${room.pin}/reset`); await post(`rooms/${room.pin}/settings`, { scene: "night" });
-  await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click(); await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
+  await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Vào đường đua", exact: true }).click(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click(); await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
   const nightVeil = await page.addStyleTag({ content: ".start-overlay { visibility:hidden!important }" });
   await shot("night-follow", "Theo dẫn đầu"); await shot("night-overview", "Toàn cảnh"); await checkLayout("night-desktop"); await nightVeil.evaluate(e => e.remove());
   await post(`rooms/${room.pin}/close`);
   const full = await post("rooms", { title: "STAR · HUD với 200 vịt", duration: 10 });
   await post(`rooms/${full.pin}/import`, { names: Array.from({ length: 200 }, (_, i) => `Người chơi STAR ${i + 1}`) });
-  await page.goto(`${origin}/?room=${full.pin}&host=1`); await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
+  await page.goto(`${origin}/?room=${full.pin}&host=1`); await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Vào đường đua", exact: true }).click(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
   await page.locator('.race-scene[data-renderer="webgl"]').waitFor(); assert.equal(await page.locator(".minimap-duck").count(), 200);
   await page.getByRole("button", { name: "Toàn màn hình", exact: true }).click(); await page.getByRole("button", { name: "Thoát toàn màn hình", exact: true }).waitFor();
   await page.waitForTimeout(400); await checkLayout("fullscreen-200"); await shot("fullscreen-200-overview", "Toàn cảnh");

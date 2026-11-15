@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Check } from "lucide-react";
 import { standings } from "../lib/race";
 import Duck from "./duck";
 type Standing = ReturnType<typeof standings>[number];
 export default function AnimatedStandings({ players, elapsed, ownId }: { players: Standing[]; elapsed: number; ownId?: string }) {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => { const media = matchMedia("(max-width: 767px)"); const update = () => setCompact(media.matches); update(); media.addEventListener("change", update); return () => media.removeEventListener("change", update); }, []);
   const priorRanks = useRef(new Map<string, number>());
   const moves = useRef(new Map<string, { delta: number; until: number }>());
   const order = players.map(p => p.id).join(",");
@@ -12,7 +14,7 @@ export default function AnimatedStandings({ players, elapsed, ownId }: { players
     players.forEach((p, rank) => { const old = priorRanks.current.get(p.id); if (old !== undefined && old !== rank) moves.current.set(p.id, { delta: old - rank, until: Date.now() + 1000 }); });
     priorRanks.current = new Map(players.map((p, i) => [p.id, i]));
   }, [order]);
-  const columns = 1, visible = Math.min(10, players.length);
+  const columns = compact ? 2 : 1, visible = Math.min(compact ? 4 : 10, players.length);
   return <ol className="animated-standings" style={{ "--visible-rows": Math.ceil(visible / columns) } as CSSProperties}>
     {players.slice(0, 14).map((p, i) => {
       const move = moves.current.get(p.id); const direction = move && move.until > Date.now() ? Math.sign(move.delta) : 0;

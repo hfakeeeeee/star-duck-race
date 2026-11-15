@@ -14,13 +14,13 @@ try {
   const r = await post("rooms", { title: "STAR · Đêm ánh sao", duration: 20, scene: "night" });
   await post(`rooms/${r.pin}/import`, { names: ["Huy", "Trang", "Tour Huế · Cố đô 2 ngàn năm", ...Array.from({ length: 45 }, (_, i) => `Ngôi sao ${i + 1}`)] });
   await page.goto(`${origin}/?room=${r.pin}&host=1`); await page.locator(".big-pin").waitFor();
-  await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
+  await page.getByRole("button", { name: "Vào đường đua", exact: true }).click(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
   await page.locator('.race-scene[data-renderer="webgl"]').waitFor({ timeout: 30000 });
   await page.getByRole("button", { name: "Tắt âm thanh", exact: true }).waitFor();
   await page.waitForFunction(() => window.__raceAudio?.some(c => c.state === "running"));
   await page.screenshot({ path: `${out}/night-start-desktop.png`, fullPage: true });
   await page.locator(".start-overlay").waitFor({ state: "hidden" });
-  await page.getByRole("button", { name: "Bảng hạng", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Bảng hạng", exact: true }).getAttribute("aria-expanded"), "true");
   const measurements = await page.evaluate(() => new Promise(resolve => {
     const start = performance.now(), previous = new Map(); let frames = 0, rankChanges = 0, inBetween = 0, worstFrame = 0, last = start;
     function sample(now) {
@@ -44,7 +44,7 @@ try {
   await page.getByRole("button", { name: "Tiếp tục đua", exact: true }).click(); await page.locator(".pause-overlay").waitFor({ state: "hidden" });
   await page.getByRole("button", { name: "Kết thúc ngay", exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: "Kết thúc cuộc đua", exact: true }).click(); await page.locator(".results-heading h2").waitFor();
   const small = await post("rooms", { title: "STAR · Kiểm tra vạch xuất phát", duration: 10 }); await post(`rooms/${small.pin}/import`, { names: ["Huy", "Trang", "Tour Huế · Cố đô 2 ngàn năm"] });
-  await page.setViewportSize({ width: 1280, height: 900 }); await page.goto(`${origin}/?room=${small.pin}&host=1`); await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click(); await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
+  await page.setViewportSize({ width: 1280, height: 900 }); await page.goto(`${origin}/?room=${small.pin}&host=1`); await page.locator(".big-pin").waitFor(); await page.getByRole("button", { name: "Vào đường đua", exact: true }).click(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click(); await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
   await page.screenshot({ path: `${out}/start-line-3-ducks.png`, fullPage: true });
   await post(`rooms/${small.pin}/close`); await post(`rooms/${r.pin}/close`); assert.deepEqual(errors, []);
   await writeFile(`${out}/report.json`, JSON.stringify({ passed: true, measurements, errors }, null, 2)); console.log("PASS Night map, responsive standings, pause/resume and centered start line screenshots");

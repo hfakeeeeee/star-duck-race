@@ -7,9 +7,10 @@ export const formatClock = (seconds: number) => { const n = Math.ceil(Math.max(0
 
 export default function RaceHud({ room, players, elapsed, ownId, replay, paused }: Props) {
   const race = room.race!, countdown = elapsed < 0, winnerKnown = elapsed >= race.duration;
+  const ready = race.ready === true;
   const completed = players.filter(p => p.finish <= elapsed).length, leader = players[0];
-  const phase = replay ? "Xem lại" : paused ? "Tạm dừng" : countdown ? "Chuẩn bị" : winnerKnown ? "Về đích" : "Đang đua";
-  const time = replay ? elapsed : countdown ? -elapsed : winnerKnown ? race.duration : race.duration - elapsed;
+  const phase = replay ? "Xem lại" : ready ? "Chờ xuất phát" : paused ? "Tạm dừng" : countdown ? "Chuẩn bị" : winnerKnown ? "Về đích" : "Đang đua";
+  const time = replay ? elapsed : ready ? race.duration : countdown ? -elapsed : winnerKnown ? race.duration : race.duration - elapsed;
   const lanes = new Map(race.lanes.map((id, i) => [id, i]));
   const name = countdown ? `${room.count} chú vịt cùng xuất phát` : leader?.name || "Đội vịt STAR";
   return <>
@@ -19,7 +20,7 @@ export default function RaceHud({ room, players, elapsed, ownId, replay, paused 
           {replay ? <RotateCcw size={12} /> : paused ? <Pause size={12} /> : <i aria-hidden="true" />}{phase}
         </span>
         <strong>{formatClock(time)}</strong>
-        <small>{replay ? "Đã phát" : countdown ? "Xuất phát sau" : winnerKnown ? "Thành tích" : "Còn lại"}</small>
+        <small>{replay ? "Đã phát" : ready ? "Thời lượng đua" : countdown ? "Xuất phát sau" : winnerKnown ? "Thành tích" : "Còn lại"}</small>
       </div>
       <div className="hud-leader">
         <div className="hud-leader-icon" aria-hidden="true"><Trophy size={19} /></div>

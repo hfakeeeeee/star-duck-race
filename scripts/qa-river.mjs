@@ -21,7 +21,7 @@ try {
   for (const scene of ["park", "sunset", "winter", "stadium", "night"]) {
     await post(`rooms/${room.pin}/settings`, { scene });
     await page.goto(`${origin}/?room=${room.pin}&host=1`); await page.locator(".big-pin").waitFor();
-    await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
+    await page.getByRole("button", { name: "Vào đường đua", exact: true }).click(); await page.getByRole("button", { name: "Bắt đầu cuộc đua", exact: true }).click();
     await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
     // Temporarily hide only the countdown veil to inspect the actual aligned grid.
     const css = await page.addStyleTag({ content: ".start-overlay { visibility: hidden !important }" });

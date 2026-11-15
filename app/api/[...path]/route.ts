@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { addPlayer, cleanName, distanceValue, durationValue, endRace, normalizeRoom, pauseRace, publicRoom, RaceError, randomInt, resumeRace, sceneValue, setTestDucks, skinValue, startRace, stateOf, SKINS, type Room } from "../../../lib/race";
+import { addPlayer, cancelPreparation, cleanName, distanceValue, durationValue, endRace, normalizeRoom, pauseRace, prepareRace, publicRoom, RaceError, randomInt, resumeRace, sceneValue, setTestDucks, skinValue, startRace, stateOf, SKINS, type Room } from "../../../lib/race";
 import { validateNames } from "../../../lib/import-names";
 export const dynamic = "force-dynamic";
 type DBRow = { pin: string; data: string; version: number; expires_at: number };
@@ -87,7 +87,9 @@ async function handle(req: Request) {
     const room = await mutate(pin, r => {
       if (r.owner !== owner) throw new RaceError("Bạn không có quyền điều khiển phòng này.", 403);
       if (r.closed) throw new RaceError("Phòng đã đóng.", 410);
-      if (action === "start") startRace(r);
+      if (action === "prepare") prepareRace(r);
+      else if (action === "unprepare") cancelPreparation(r);
+      else if (action === "start") startRace(r);
       else if (action === "pause") pauseRace(r);
       else if (action === "resume") resumeRace(r);
       else if (action === "finish") endRace(r);

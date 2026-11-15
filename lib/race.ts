@@ -26,7 +26,7 @@ export type Reaction = { id: string; playerId: string; kind: string; at: number 
 export type Race = {
   id: string; startAt: number; duration: number; order: string[]; seeds: Record<string, number>;
   normalizer: number; slowest: number; tail: number; lanes: string[]; model?: number;
-  pausedAt: number | null; pausedMs: number; endedEarly: boolean;
+  pausedAt: number | null; pausedMs: number; endedEarly: boolean; ready?: boolean;
 };
 export type Room = { pin: string; title: string; owner: string; duration: number; locked: boolean; closed: boolean; players: Player[]; race: Race | null; createdAt: number; scene?: SceneId; distance?: number; reactions?: Reaction[] };
 export class RaceError extends Error {
@@ -70,7 +70,8 @@ export function currentDistance(t: number, seed: number, model = 3) {
   const [a, b, c] = model < 3 ? [.55, .25, .15] : [.18, .10, .055];
   return t + a * (Math.cos(p) - Math.cos(p + f * t)) / f + b * (Math.cos(q) - Math.cos(q + g * t)) / g + c * (Math.sin(r + 43 * t) - Math.sin(r)) / 43;
 }
-export function raceElapsed(race: Pick<Race, "startAt" | "pausedAt" | "pausedMs" | "endedEarly" | "duration" | "tail">, now = Date.now()) {
+export function raceElapsed(race: Pick<Race, "startAt" | "pausedAt" | "pausedMs" | "endedEarly" | "duration" | "tail" | "ready">, now = Date.now()) {
+  if (race.ready) return -4;
   return race.endedEarly ? race.duration + race.tail : Math.max(-4, ((race.pausedAt ?? now) - race.startAt - (race.pausedMs || 0)) / 1000);
 }
 export function finishTime(race: Pick<Race, "duration" | "seeds" | "normalizer" | "slowest" | "tail" | "model">, id: string) {
@@ -113,6 +114,7 @@ export function normalizeRoom(room: Room): Room {
 export function stateOf(room: Room, now = Date.now()) {
   if (room.closed) return "closed";
   if (!room.race) return "waiting";
+  if (room.race.ready) return "ready";
   const elapsed = raceElapsed(room.race, now);
   if (elapsed < 0) return "countdown";
   if (room.race.pausedAt !== null) return "paused";
@@ -130,9 +132,22 @@ export function addPlayer(room: Room, player: Player) {
   return player;
 }
 export function startRace(room: Room, now = Date.now()) {
-  if (room.closed || room.race) throw new RaceError("Hãy đưa phòng về trạng thái chờ trước khi bắt đầu.", 409);
+  if (room.closed || (room.race && !room.race.ready)) throw new RaceError("Hãy đưa phòng về trạng thái chờ trước khi bắt đầu.", 409);
   if (room.players.length < 2) throw new RaceError("Cần ít nhất 2 người để bắt đầu.", 409);
-  room.locked = true; room.race = buildRace(room.players, room.duration, now); room.reactions = [];
+  room.locked = true;
+  if (room.race?.ready) { room.race.ready = false; room.race.startAt = now + 4000; }
+  else room.race = buildRace(room.players, room.duration, now);
+  room.reactions = [];
+}
+export function prepareRace(room: Room, now = Date.now()) {
+  if (room.closed || room.race) throw new RaceError("Hãy đưa phòng về trạng thái chờ trước khi vào đường đua.", 409);
+  if (room.players.length < 2) throw new RaceError("Cần ít nhất 2 người để vào đường đua.", 409);
+  room.race = { ...buildRace(room.players, room.duration, now), ready: true };
+  room.locked = true; room.reactions = [];
+}
+export function cancelPreparation(room: Room) {
+  if (!room.race?.ready || room.closed) throw new RaceError("Chỉ quay về phòng chờ khi chưa xuất phát.", 409);
+  room.race = null; room.locked = false; room.reactions = [];
 }
 export function setTestDucks(room: Room, count: unknown) {
   if (room.closed) throw new RaceError("Phòng đã đóng.", 410);
@@ -159,7 +174,7 @@ export function resumeRace(room: Room, now = Date.now()) {
   room.race.pausedMs += now - room.race.pausedAt; room.race.pausedAt = null;
 }
 export function endRace(room: Room) {
-  if (!room.race || room.race.endedEarly) throw new RaceError("Cuộc đua chưa bắt đầu hoặc đã kết thúc.", 409);
+  if (!room.race || room.race.ready || room.race.endedEarly) throw new RaceError("Cuộc đua chưa bắt đầu hoặc đã kết thúc.", 409);
   room.race.pausedAt = null; room.race.endedEarly = true;
 }
 export function publicRoom(room: Room, now = Date.now()) {
@@ -168,7 +183,7 @@ export function publicRoom(room: Room, now = Date.now()) {
   return { pin: room.pin, title: room.title, duration: room.duration, locked: room.locked, state, count: room.players.length, capacity: 200, serverNow: now, scene: room.scene!, distance: room.distance!,
     players: room.players.map(({ id, name, joinedAt, skin, isTest }) => ({ id, name, joinedAt, skin: skin!, isTest: isTest === true })),
     reactions: (room.reactions || []).filter(v => now - v.at < 6000),
-    race: r ? { id: r.id, model: r.model ?? 2, startAt: r.startAt, duration: r.duration, seeds: r.seeds, normalizer: r.normalizer, slowest: r.slowest, tail: r.tail, lanes: r.lanes,
+    race: r ? { id: r.id, ready: r.ready === true, model: r.model ?? 2, startAt: r.startAt, duration: r.duration, seeds: r.seeds, normalizer: r.normalizer, slowest: r.slowest, tail: r.tail, lanes: r.lanes,
       pausedAt: r.pausedAt, pausedMs: r.pausedMs, endedEarly: r.endedEarly, order: reveal ? r.order : [], finishes: reveal ? Object.fromEntries(r.order.map(id => [id, finishTime(r, id)])) : {} as Record<string, number> } : null };
 }
 export type PublicRoom = ReturnType<typeof publicRoom>;

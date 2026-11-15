@@ -58,3 +58,13 @@ Chế độ trình chiếu ẩn thanh công cụ, dùng trọn khung nhìn; nút
 Tạo phòng có trường Vịt thử nghiệm 0–200. Cài đặt phòng chờ cho đổi số vịt thử mà giữ người thật và giới hạn tổng 200.
 Vịt thử có nhãn riêng, không có quyền điều khiển; dùng cùng quỹ đạo công bằng như người thật.
 QR thu gọn vẫn vuông, bấm để phóng to; thao tác bắt đầu và các nút chính luôn nằm trong khung nhìn.
+
+## Vào đường đua trước, xuất phát sau
+
+Nút phòng chờ là Vào đường đua, chỉ khóa danh sách và chuyển cả phòng sang trạng thái ready.
+Trạng thái này giữ vịt đứng yên, chưa đếm ngược, không tự xuất phát dù chờ lâu hoặc tải lại trang.
+Admin có thể chỉnh camera, bật trình chiếu rồi bấm Bắt đầu cuộc đua ngay trong màn game để đếm ngược 4 giây.
+Giữ nguyên ID cuộc đua khi xuất phát để camera, trình chiếu và lựa chọn bảng hạng không bị đặt lại.
+Admin có nút Về phòng chờ trước khi xuất phát; mọi người được giữ và phòng được mở khóa lại.
+Bảng hạng mặc định mở, kể cả trình chiếu; chỉ thu gọn khi người xem chủ động bấm.
+Desktop dành cột riêng cho bảng hạng, điện thoại dùng dải gọn ở dưới; HUD co theo chiều cao mặt sông thực tế.

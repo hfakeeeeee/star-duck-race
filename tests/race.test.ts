@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addPlayer, buildRace, cleanName, currentDistance, durationValue, endRace, finishTime, pauseRace, publicRoom, raceElapsed, raceProgress, resumeRace, setTestDucks, startRace, stateOf, standings, SKINS, type Room } from "../lib/race.ts";
+import { addPlayer, buildRace, cancelPreparation, cleanName, currentDistance, durationValue, endRace, finishTime, pauseRace, prepareRace, publicRoom, raceElapsed, raceProgress, resumeRace, setTestDucks, startRace, stateOf, standings, SKINS, type Room } from "../lib/race.ts";
 import { parseDelimited, validateNames } from "../lib/import-names.ts";
 const room = (): Room => ({ pin: "123456", owner: "admin", title: "STAR", duration: 60, locked: false, closed: false, players: [], race: null, createdAt: 0 });
 const player = (i: number) => ({ id: String(i), name: `Người ${i}`, tokenHash: `token-${i}`, joinedAt: i, skin: SKINS[i % SKINS.length].id });
@@ -104,4 +104,26 @@ test("test duck settings preserve real participants, stable bot identities and t
   r.locked = true; setTestDucks(r, 2); assert.equal(r.players.length, 4);
   startRace(r); assert.throws(() => setTestDucks(r, 0), /phòng chờ/);
   const exposed = publicRoom(r); assert.equal(exposed.players.filter(p => p.isTest).length, 2); assert.ok(!JSON.stringify(exposed).includes("test:"));
+});
+
+test("entering the course freezes every device until explicit launch, including serialized reconnects", () => {
+  const r = room(); setTestDucks(r, 200); prepareRace(r, 1000);
+  assert.equal(stateOf(r, 86400000), "ready"); assert.equal(r.locked, true);
+  const restored = JSON.parse(JSON.stringify(r)) as Room, race = restored.race!;
+  for (const now of [1000, 9000, 86400000]) {
+    const exposed = publicRoom(restored, now); assert.equal(exposed.race!.ready, true); assert.equal(raceElapsed(race, now), -4);
+    assert.ok(standings(exposed, raceElapsed(race, now)).every(p => p.progress === 0)); assert.equal(exposed.race!.order.length, 0);
+  }
+  assert.throws(() => addPlayer(restored, player(300)), /khóa/); assert.throws(() => endRace(restored), /chưa bắt đầu/); assert.throws(() => pauseRace(restored), /Chỉ/);
+  const id = race.id, seeds = { ...race.seeds }, lanes = [...race.lanes]; startRace(restored, 90000);
+  assert.equal(restored.race!.id, id); assert.deepEqual(restored.race!.seeds, seeds); assert.deepEqual(restored.race!.lanes, lanes);
+  assert.equal(stateOf(restored, 90000), "countdown"); assert.equal(raceElapsed(restored.race!, 90000), -4);
+  assert.equal(stateOf(restored, 94000), "racing"); assert.equal(raceElapsed(restored.race!, 94000), 0);
+  assert.equal(finishTime(restored.race!, restored.race!.order[0]), 60); assert.throws(() => startRace(restored, 95000), /trạng thái chờ/);
+});
+
+test("preparation can return to an unlocked lobby without removing anyone", () => {
+  const r = room(); setTestDucks(r, 20); const players = JSON.stringify(r.players);
+  prepareRace(r); cancelPreparation(r); assert.equal(stateOf(r), "waiting"); assert.equal(r.locked, false); assert.equal(JSON.stringify(r.players), players);
+  assert.throws(() => cancelPreparation(r), /chưa xuất phát/); prepareRace(r); startRace(r); assert.throws(() => cancelPreparation(r), /chưa xuất phát/);
 });
