@@ -4,10 +4,11 @@ import type * as T from "three";
 import { raceElapsed, raceProgress, SKINS, standings, type PublicRoom } from "../lib/race";
 import { MotionClock, dampFactor } from "../lib/motion";
 import { createRiverWater, riverHeight } from "../lib/river-water";
+import { configureOverview, followCameraPose, raceWorldX, TRACK_LENGTH } from "../lib/race-view";
 
 export type CameraMode = "follow" | "overview" | "mine";
 export type Quality = "auto" | "low";
-const LENGTH = 160;
+const LENGTH = TRACK_LENGTH;
 type Props = { room: PublicRoom; elapsed: number; ownId?: string; camera: CameraMode; quality: Quality; labels: boolean; rate?: number; replay?: boolean; offset?: number; seek?: number };
 
 export default function RaceScene(props: Props) {
@@ -35,6 +36,7 @@ export default function RaceScene(props: Props) {
       const sky = night ? "#0b1533" : sunset ? "#f1c4b4" : winter ? "#b7d5ed" : "#c7e8f5";
       scene.background = new THREE.Color(sky); scene.fog = new THREE.Fog(sky, 180, 480);
       const camera = new THREE.PerspectiveCamera(44, 1, .1, 700);
+      const overview = new THREE.OrthographicCamera(-92, 92, 52, -52, .1, 700);
       scene.add(new THREE.HemisphereLight(night ? 0xa2c5fb : sunset ? 0xffede0 : 0xffffff, night ? 0x243953 : 0x6a9a8e, night ? 1.25 : 2.8));
       const sun = new THREE.DirectionalLight(night ? 0xb2ceff : sunset ? 0xffd1a5 : 0xfff3d9, night ? 1.6 : 2.7); sun.position.set(-40, 70, 30); scene.add(sun);
       const geometries = new Set<T.BufferGeometry>(), materials = new Set<T.Material>(), textures = new Set<T.Texture>();
@@ -160,7 +162,7 @@ export default function RaceScene(props: Props) {
       let lastFrame = performance.now();
       let frame = 0, initialized = false, width = 1, height = 1, frames = 0, lastFps = performance.now();
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const resize = () => { width = node.clientWidth; height = node.clientHeight; renderer.setSize(width, height, false); camera.aspect = width / Math.max(1, height); camera.updateProjectionMatrix(); };
+      const resize = () => { width = node.clientWidth; height = node.clientHeight; renderer.setSize(width, height, false); camera.aspect = width / Math.max(1, height); camera.updateProjectionMatrix(); configureOverview(overview, camera.aspect, height); };
       const observer = new ResizeObserver(resize); observer.observe(node); resize();
       const laneIndex = new Map(race.lanes.map((id, i) => [id, i]));
       const zFor = (id: string) => ((laneIndex.get(id) || 0) / Math.max(1, room.count - 1) - .5) * Math.min(20, Math.max(4, (room.count - 1) * 2.2));
@@ -180,26 +182,21 @@ export default function RaceScene(props: Props) {
         const lead = cachedRank[0];
         const focalId = mode === "mine" && ownId && indexes.has(ownId) ? ownId : lead?.id;
         const pack = cachedRank.slice(0, 5);
-        const leadX = focalId ? raceProgress(race, focalId, elapsed) * LENGTH : 0;
-        const packX = pack.reduce((sum, p) => sum + raceProgress(race, p.id, elapsed) * LENGTH, 0) / Math.max(1, pack.length);
+        const leadX = focalId ? raceWorldX(raceProgress(race, focalId, elapsed)) : 0;
+        const packX = pack.reduce((sum, p) => sum + raceWorldX(raceProgress(race, p.id, elapsed)), 0) / Math.max(1, pack.length);
         const focalX = mode === "mine" ? leadX : leadX * .55 + packX * .45;
         const focalZ = mode === "mine" && focalId ? zFor(focalId) : 0;
-        const leaderX = lead ? raceProgress(race, lead.id, elapsed) * LENGTH : 0;
-        if (mode === "overview") { desired.set(75, width < 600 ? 155 : 100, width < 600 ? 40 : 104); lookAt.set(80, 0, 0); }
-        else {
-          const x = Math.min(LENGTH + 7, Math.max(-1, focalX));
-          // Low, mostly side-on framing keeps a passing duck visibly moving
-          // through the shot. Do not zoom out to fit the entire race spread.
-          desired.set(x - (width < 600 ? 5 : 3), width < 600 ? 13 : 9, focalZ + (width < 600 ? 30 : 23));
-          lookAt.set(x + (width < 600 ? 0 : 3), .4, focalZ);
-        }
+        const leaderX = lead ? raceWorldX(raceProgress(race, lead.id, elapsed)) : 0;
+        const pose = followCameraPose(focalX, focalZ, width < 600);
+        desired.set(...pose.position); lookAt.set(...pose.target);
         const cameraEase = initialized && !reduced ? dampFactor(dt, 6) : 1;
-        camera.position.lerp(desired, cameraEase); smoothLookAt.lerp(lookAt, cameraEase); camera.lookAt(smoothLookAt); initialized = true;
+        camera.position.lerp(desired, cameraEase); smoothLookAt.lerp(lookAt, cameraEase); camera.up.set(0, 1, 0); camera.lookAt(smoothLookAt); initialized = true;
+        const activeCamera = mode === "overview" ? overview : camera;
         const zPositions: number[] = [];
         room.players.forEach((p, i) => {
           const size = room.count > 80 ? .76 : 1.05;
           const launch = 1 - Math.exp(-Math.max(0, elapsed) * 2);
-          const progress = raceProgress(race, p.id, elapsed), x = progress * LENGTH - 1.13 * size, z = zFor(p.id) + Math.sin(elapsed * .6 + (race.seeds[p.id] % 9)) * .1 * launch;
+          const progress = raceProgress(race, p.id, elapsed), x = raceWorldX(progress) - 1.13 * size, z = zFor(p.id) + Math.sin(elapsed * .6 + (race.seeds[p.id] % 9)) * .1 * launch;
           const swell = riverHeight(x, z, animationTime);
           zPositions[i] = z; dummy.position.set(x, swell + .075, z);
           dummy.scale.setScalar(size);
@@ -218,20 +215,22 @@ export default function RaceScene(props: Props) {
         wake.instanceMatrix.needsUpdate = true;
         const noseOffset = 1.13 * (room.count > 80 ? .76 : 1.05);
         ring.position.set(leaderX - noseOffset, .13, lead ? zFor(lead.id) : 0); ring.visible = !!lead && elapsed >= 0;
-        ownRing.visible = !!ownId && indexes.has(ownId); if (ownId && ownRing.visible) ownRing.position.set(raceProgress(race, ownId, elapsed) * LENGTH - noseOffset, .14, zFor(ownId));
-        renderer.render(scene, camera);
+        ownRing.visible = !!ownId && indexes.has(ownId); if (ownId && ownRing.visible) ownRing.position.set(raceWorldX(raceProgress(race, ownId, elapsed)) - noseOffset, .14, zFor(ownId));
+        renderer.render(scene, activeCamera);
         const picked = new Map(cachedRank.slice(0, width < 600 ? 3 : 5).map((p, i) => [p.id, i + 1]));
         if (ownId) { const ownRank = cachedRank.findIndex(p => p.id === ownId); if (ownRank >= 0) picked.set(ownId, ownRank + 1); }
         const boxes: { x: number; y: number }[] = [];
         room.players.forEach((p, i) => {
           const label = labels[i], place = picked.get(p.id); if (!showLabels || !place) { label.el.style.display = "none"; return; }
-          projected.set(raceProgress(race, p.id, elapsed) * LENGTH - noseOffset, 2.1, zPositions[i]).project(camera);
+          projected.set(raceWorldX(raceProgress(race, p.id, elapsed)) - noseOffset, 2.1, zPositions[i]).project(activeCamera);
           let x = (projected.x * .5 + .5) * width, y = (-projected.y * .5 + .5) * height;
-          if (projected.z > 1 || x < 0 || x > width || y < 15 || y > height - 20) { label.el.style.display = "none"; return; }
-          x = Math.max(80, Math.min(width - 80, x));
+          const topLimit = width < 600 ? 120 : 132, bottomLimit = height - 110;
+          if (projected.z > 1 || x < 0 || x > width || y < topLimit || y > bottomLimit) { label.el.style.display = "none"; return; }
+          const side = width < 600 ? 90 : 110;
+          x = Math.max(side, Math.min(width - side, x));
           while (boxes.some(b => Math.abs(b.x - x) < 140 && Math.abs(b.y - y) < 26)) y -= 28;
           boxes.push({ x, y }); const labelEase = label.placed && !reduced ? dampFactor(dt, 14) : 1;
-          label.x += (x - label.x) * labelEase; label.y += (Math.max(18, y) - label.y) * labelEase; label.placed = true;
+          label.x += (x - label.x) * labelEase; label.y += (Math.max(topLimit, y) - label.y) * labelEase; label.placed = true;
           label.el.style.display = "flex"; label.el.style.transform = `translate(${label.x}px,${label.y}px) translate(-50%,-100%)`;
           label.el.classList.toggle("mine", p.id === ownId); label.rank.textContent = `${place}${p.id === ownId ? " · Bạn" : ""}`;
         });

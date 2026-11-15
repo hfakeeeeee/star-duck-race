@@ -37,3 +37,14 @@ Nước dùng nhiều lớp sóng, pháp tuyến theo sóng, gợn nhỏ, phản
 Vịt nổi theo cùng cao độ sóng; vệt nước phía sau thay đổi theo vận tốc. Chế độ nhẹ giảm số đỉnh mặt nước.
 Hai bản nhạc gốc Ngày hội STAR / Groove bên dòng sông có trống, bass, hợp âm, giai điệu và biến tấu.
 Nhịp nhạc được lên lịch theo AudioContext, độc lập với tốc độ khung hình; âm lượng và tạm dừng có chuyển êm.
+
+## Căn góc máy và bố trí HUD
+
+Mỏ vịt ở x = -3,25 khi chuẩn bị, cách mép sau toàn bộ dải xuất phát 0,7 đơn vị; thân không đè lên vạch.
+Tọa độ hiển thị được ánh xạ lại để vịt vẫn chạm đích x = 160 đúng thời gian mô phỏng.
+Toàn cảnh dùng camera trực giao nhìn thẳng xuống: bốn góc đường đua là góc vuông, không co hẹp theo phối cảnh.
+Trên màn hình dọc, toàn cảnh quay đường đua theo trục dọc và chừa khoảng trống cho HUD ở hai đầu.
+Camera bám đua chỉ nghiêng xuống theo trục ngang sông, vị trí máy và điểm nhìn cùng X, bờ sông nằm ngang.
+HUD được tách: đồng hồ nhỏ nền navy ở trên trái, thẻ người dẫn đầu ở trên phải, minimap cân giữa phía dưới.
+Minimap gộp cự ly, số vịt và số đã cán đích; chấm vịt giữ làn ổn định khi đổi hạng. Bỏ dòng credit rời ở đáy.
+Giữ màu navy/gold, thêm biến thể nền tối, bố cục gọn cho điện thoại; nhãn vịt tránh vùng HUD trên và dưới.

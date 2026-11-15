@@ -1,16 +1,17 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, ChevronDown, Download, Eye, Flag, ImageDown, Pause, Play, RotateCcw, SkipForward, Trophy, Volume2, VolumeX, X } from "lucide-react";
-import { finishTime, raceElapsed, SKINS, standings, type PublicRoom } from "../lib/race";
+import { Camera, ChevronDown, Download, Eye, ImageDown, Pause, Play, RotateCcw, SkipForward, Trophy, Volume2, VolumeX } from "lucide-react";
+import { finishTime, raceElapsed, standings, type PublicRoom } from "../lib/race";
 import { RaceAudio } from "../lib/race-audio";
 import { exportCSV, exportPNG } from "../lib/export-results";
 import Duck from "./duck";
 import RaceScene, { type CameraMode, type Quality } from "./race-scene";
 import Dialog from "./dialog";
 import AnimatedStandings from "./animated-standings";
+import RaceHud from "./race-hud";
+export { formatClock } from "./race-hud";
 
 type Props = { room: PublicRoom; offset: number; ownId?: string; isHost: boolean; busy: boolean; onAction: (action: string, body?: Record<string, unknown>) => Promise<void>; onReact: (kind: string) => void; onError: (message: string) => void };
-export const formatClock = (seconds: number) => { const n = Math.ceil(Math.max(0, seconds)); return `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`; };
 const seconds = (s: number) => `${s.toFixed(3)} s`;
 export default function RaceStage({ room, offset, ownId, isHost, busy, onAction, onReact, onError }: Props) {
   const race = room.race!;
@@ -25,7 +26,7 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
   const elapsed = raceElapsed(race, now + offset); const endAt = race.duration + race.tail;
   const finished = elapsed >= endAt - .000001; const winnerKnown = elapsed >= race.duration; const paused = race.pausedAt !== null;
   const displayElapsed = replay ? replayTime : Math.min(endAt, elapsed);
-  const countdown = Math.ceil(Math.max(0, -elapsed)); const remaining = Math.max(0, race.duration - elapsed);
+  const countdown = Math.ceil(Math.max(0, -elapsed));
   const live = useMemo(() => standings(room, displayElapsed), [room, displayElapsed]);
   const completed = live.filter(p => p.finish <= displayElapsed).length;
   const winnerId = room.race?.order[0] || (winnerKnown ? live[0]?.id : ""); const winner = room.players.find(p => p.id === winnerId);
@@ -77,13 +78,11 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
     {audioSettings && <div className="sound-settings"><label htmlFor="music-volume">Âm lượng</label><input id="music-volume" aria-label="Âm lượng" type="range" min="0" max="1" step=".05" value={volume} onChange={e => setVolume(Number(e.target.value))} /><span>{Math.round(volume * 100)}%</span><label htmlFor="music-track">Nhạc nền</label><select id="music-track" value={track} onChange={e => setTrack(e.target.value)}><option value="bright">Ngày hội STAR</option><option value="chill">Groove bên dòng sông</option></select><span>Space: tạm dừng · M: âm thanh</span></div>}
 
     <div className={`race-arena ${room.scene === "night" ? "night-arena" : ""}`}><div className="scene-wrap"><RaceScene room={room} elapsed={displayElapsed} ownId={ownId} camera={camera} quality={quality} labels={labels} offset={offset} replay={replay} seek={replaySeek} rate={replay ? replayRunning ? speed : 0 : paused || finished ? 0 : 1} />
-      <div className="race-hud"><div className="hud-timer"><span>{replay ? "Xem lại" : paused ? "Đã tạm dừng" : countdown ? "Xuất phát sau" : winnerKnown ? "Đã về đích" : "Thời gian còn lại"}</span><strong>{replay ? formatClock(displayElapsed) : countdown || formatClock(remaining)}</strong></div><div className="hud-leader"><span>{winnerKnown && !replay ? "Quán quân" : "Đang dẫn đầu"}</span><strong>{winnerKnown && !replay ? winner?.name : live[0]?.name}</strong><small>{Math.max(0, room.distance * (1 - Math.min(1, live[0]?.progress || 0))).toFixed(0)} m tới đích</small></div></div>
-      <div className="race-minimap" aria-label="Bản đồ vị trí đàn vịt"><span>Xuất phát</span><svg viewBox="0 0 500 35" preserveAspectRatio="none" aria-hidden="true"><path d="M5 17.5H490" stroke="#ffffff50" strokeWidth="2" /><path d="M490 3v29" stroke="#d2aa61" strokeWidth="3" />{live.map((p, i) => <circle key={p.id} cx={8 + Math.max(0, Math.min(1, p.progress)) * 480} cy={7 + (i % 4) * 7} r={p.id === ownId ? 4.5 : 3} fill={p.id === ownId ? "#ffffff" : i === 0 ? "#f5ce53" : (SKINS.find(s => s.id === p.skin) || SKINS[0]).color} />)}</svg><Flag size={14} /></div>
+      <RaceHud room={room} players={live} elapsed={displayElapsed} ownId={ownId} replay={replay} paused={paused} />
       {countdown > 0 && !replay && <div className="start-overlay"><span>Đội vịt đã vào vị trí</span><strong key={countdown}>{countdown}</strong><span>Sẵn sàng cùng STAR!</span></div>}
       {paused && !replay && <div className="pause-overlay"><Pause size={36} /><strong>Cuộc đua đang tạm dừng</strong><span>Đồng hồ và vị trí được giữ cho cả phòng.</span></div>}
       {winnerKnown && elapsed < endAt + 5 && !replay && !paused && <div className="confetti-field" aria-hidden="true">{Array.from({ length: 56 }, (_, i) => <i key={i} style={{ left: `${i * 73 % 100}%`, animationDelay: `${i % 9 * -.3}s`, animationDuration: `${2 + i % 4 * .3}s`, background: ["#d2aa61", "#fff4bc", "#172b63", "#b6d9f1"][i % 4] }} />)}</div>}
       <div className="floating-reactions" aria-hidden="true">{room.reactions.map(r => <span key={r.id} style={{ left: `${15 + r.at % 70}%` }}>{r.kind}</span>)}</div>
-      <div className="scene-credit"><span>STAR RIVER CLUB</span><span>{room.distance} m · {room.count} chú vịt</span></div>
     </div>
 
     <aside className="live-standings"><div className="standings-heading"><h2>{finished && !replay ? "Thứ hạng cuối" : "Bảng hạng trực tiếp"}</h2><span className="live-dot">{completed}/{room.count} về đích</span></div>{ownId && myPlace >= 0 && <div className="my-live-place"><span>Vị trí của bạn</span><strong>#{myPlace + 1}<small> / {room.count}</small></strong><span>{live[myPlace].name}</span></div>}<AnimatedStandings players={live} elapsed={displayElapsed} ownId={ownId} />{room.count > 10 && <p className="standings-tail">Top 10 / {room.count} người chơi</p>}</aside></div>

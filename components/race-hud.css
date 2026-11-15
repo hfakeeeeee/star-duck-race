@@ -1,0 +1,97 @@
+/* Race information occupies the perimeter; the middle belongs to the ducks. */
+.race-stage .race-hud-balanced {
+  inset: 16px 16px auto; max-width: none; padding: 0; gap: 16px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  background: none; border: 0; border-radius: 0; color: var(--primary);
+}
+.race-hud-balanced .hud-timer {
+  flex: 0 0 152px; min-width: 0; padding: 12px 16px;
+  border: 1px solid #ffffff24; border-radius: 12px; background: #172b63f5;
+  color: white;
+}
+.race-hud-balanced .hud-timer .hud-state {
+  display: flex; align-items: center; gap: 6px; font-size: 12px; color: #f7f9ff;
+}
+.hud-state i { width: 6px; height: 6px; border-radius: 50%; background: #8bdbc0; }
+.race-hud-balanced .hud-timer strong {
+  display: block; font-size: 32px; line-height: 1.3; letter-spacing: .5px; margin: 4px 0 2px;
+}
+.race-hud-balanced .hud-timer small { display: block; color: #d4deed; font-size: 12px; white-space: nowrap; }
+.race-hud-balanced .hud-leader {
+  width: min(330px, 48%); display: flex; align-items: flex-start; gap: 11px;
+  padding: 13px 15px; border: 1px solid #172b6320; border-radius: 12px; background: #fffffff5;
+}
+.hud-leader-icon {
+  display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px;
+  border-radius: 10px; background: var(--gold-light); color: #89652b;
+}
+.hud-leader-copy { min-width: 0; flex: 1; }
+.hud-leader-copy > span { display: block; color: var(--muted); font-size: 12px; }
+.hud-leader-copy > strong {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; overflow-wrap: anywhere; color: var(--primary); font-size: 14px;
+  line-height: 1.5; margin-top: 3px;
+}
+.hud-leader-copy > small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.race-stage .race-minimap-balanced {
+  left: 50%; right: auto; bottom: 16px; transform: translateX(-50%);
+  width: calc(100% - 32px); max-width: 720px; padding: 11px 16px; gap: 18px;
+  display: grid; grid-template-columns: 112px minmax(0, 1fr) 84px; align-items: center;
+  border: 1px solid #172b6320; border-radius: 12px; background: #fffffff5; color: var(--primary);
+}
+.minimap-meta { display: grid; gap: 2px; }
+.minimap-meta > span { font-size: 10px; letter-spacing: .4px; font-weight: 600; color: var(--muted); }
+.minimap-meta > strong { font-size: 21px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.minimap-meta > strong > small { font-size: 12px; font-weight: 400; }
+.minimap-meta > small { color: var(--muted); font-size: 12px; }
+.minimap-course { min-width: 0; }
+.minimap-endpoints { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 3px; color: var(--muted); font-size: 12px; }
+.minimap-endpoints > span:last-child { display: inline-flex; align-items: center; gap: 4px; }
+.minimap-course > svg { display: block; width: 100%; height: 36px; overflow: visible; }
+.minimap-river { fill: #172b63; }
+.minimap-lane { stroke: #ffffff17; stroke-width: 1; }
+.minimap-start { stroke: #ffffff70; stroke-width: 1.5; }
+.minimap-goal { stroke: #f3d386; stroke-width: 2; }
+.minimap-duck { transition: cx 120ms linear, opacity 200ms ease; }
+.minimap-duck.is-mine { stroke: #d2aa61; stroke-width: 2; }
+.minimap-finish { text-align: center; border-left: 1px solid var(--border); padding-left: 12px; }
+.minimap-finish > strong { display: block; font-size: 21px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.minimap-finish > strong > small { font-size: 11px; color: var(--muted); font-weight: 400; }
+.minimap-finish > span { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.race-stage .night-arena .hud-leader,
+.race-stage .night-arena .race-minimap-balanced { background: #102044f5; border-color: #6d83b94d; color: #f7f9ff; }
+.night-arena .hud-leader-copy > strong { color: #f3d386; }
+.night-arena .hud-leader-copy > span,
+.night-arena .hud-leader-copy > small,
+.night-arena .minimap-meta > span,
+.night-arena .minimap-meta > small,
+.night-arena .minimap-endpoints,
+.night-arena .minimap-finish > span,
+.night-arena .minimap-finish > strong > small { color: #c2d0e6; }
+.night-arena .minimap-finish { border-color: #6d83b94d; }
+.night-arena .hud-leader-icon { background: #d2aa6120; color: #f3d386; }
+@media (max-width: 767px) {
+  .race-stage .race-hud-balanced { inset: 10px 10px auto; gap: 10px; }
+  .race-hud-balanced .hud-timer { flex-basis: 116px; padding: 10px 12px; border-radius: 10px; }
+  .race-hud-balanced .hud-timer strong { font-size: 27px; }
+  .race-hud-balanced .hud-timer small { font-size: 12px; }
+  .race-hud-balanced .hud-leader { flex: 1; width: auto; padding: 10px 11px; gap: 0; border-radius: 10px; }
+  .hud-leader-icon { display: none; }
+  .hud-leader-copy > strong { font-size: 12px; }
+  .hud-leader-copy > span, .hud-leader-copy > small { font-size: 11px; }
+  .race-stage .race-minimap-balanced {
+    width: calc(100% - 20px); bottom: 10px; padding: 10px 12px; gap: 8px 12px;
+    grid-template-columns: minmax(0, 1fr) auto; border-radius: 10px;
+  }
+  .minimap-meta { display: flex; align-items: baseline; gap: 7px; }
+  .minimap-meta > span { display: none; }
+  .minimap-meta > strong { font-size: 15px; }
+  .minimap-meta > small { font-size: 11px; }
+  .minimap-finish { grid-column: 2; grid-row: 1; display: flex; align-items: baseline; gap: 5px; border: 0; padding: 0; }
+  .minimap-finish > strong { font-size: 14px; }
+  .minimap-finish > span { font-size: 11px; }
+  .minimap-course { grid-column: 1 / -1; grid-row: 2; }
+  .minimap-course > svg { height: 30px; }
+  .minimap-endpoints { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .minimap-duck { transition: none; } }
