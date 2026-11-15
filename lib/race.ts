@@ -25,7 +25,7 @@ export type Player = { id: string; name: string; tokenHash: string; joinedAt: nu
 export type Reaction = { id: string; playerId: string; kind: string; at: number };
 export type Race = {
   id: string; startAt: number; duration: number; order: string[]; seeds: Record<string, number>;
-  normalizer: number; slowest: number; tail: number; lanes: string[];
+  normalizer: number; slowest: number; tail: number; lanes: string[]; model?: number;
   pausedAt: number | null; pausedMs: number; endedEarly: boolean;
 };
 export type Room = { pin: string; title: string; owner: string; duration: number; locked: boolean; closed: boolean; players: Player[]; race: Race | null; createdAt: number; scene?: SceneId; distance?: number; reactions?: Reaction[] };
@@ -60,38 +60,42 @@ export function distanceValue(value: unknown) { if (![100, 300, 600, 900].includ
 
 // Analytic integral of strictly positive current/surge velocities. Seeds are independent
 // of names, skins and lanes; all devices evaluate the same trajectory without a frame loop.
-export function currentDistance(t: number, seed: number) {
+export function currentDistance(t: number, seed: number, model = 3) {
   const p = (seed % 997) / 997 * Math.PI * 2;
   const q = (Math.floor(seed / 997) % 991) / 991 * Math.PI * 2;
   const r = (Math.floor(seed / 988027) % 983) / 983 * Math.PI * 2;
   const f = 5 + seed % 11, g = 19 + seed % 17;
-  return t + .55 * (Math.cos(p) - Math.cos(p + f * t)) / f + .25 * (Math.cos(q) - Math.cos(q + g * t)) / g + .15 * (Math.sin(r + 43 * t) - Math.sin(r)) / 43;
+  // Keep the previous kernel for stored races. New races retain at least 66.5%
+  // of cruising speed; passing comes from a surge rather than a near-stop.
+  const [a, b, c] = model < 3 ? [.55, .25, .15] : [.18, .10, .055];
+  return t + a * (Math.cos(p) - Math.cos(p + f * t)) / f + b * (Math.cos(q) - Math.cos(q + g * t)) / g + c * (Math.sin(r + 43 * t) - Math.sin(r)) / 43;
 }
 export function raceElapsed(race: Pick<Race, "startAt" | "pausedAt" | "pausedMs" | "endedEarly" | "duration" | "tail">, now = Date.now()) {
   return race.endedEarly ? race.duration + race.tail : Math.max(-4, ((race.pausedAt ?? now) - race.startAt - (race.pausedMs || 0)) / 1000);
 }
-export function finishTime(race: Pick<Race, "duration" | "seeds" | "normalizer" | "slowest" | "tail">, id: string) {
-  const progress = currentDistance(1, race.seeds[id] || 0) / race.normalizer;
+export function finishTime(race: Pick<Race, "duration" | "seeds" | "normalizer" | "slowest" | "tail" | "model">, id: string) {
+  const progress = currentDistance(1, race.seeds[id] || 0, race.model ?? 2) / race.normalizer;
   return race.duration + race.tail * Math.max(0, 1 - progress) / Math.max(.000001, 1 - race.slowest);
 }
-export function raceProgress(race: Pick<Race, "duration" | "seeds" | "normalizer" | "slowest" | "tail">, id: string, elapsed: number) {
+export function raceProgress(race: Pick<Race, "duration" | "seeds" | "normalizer" | "slowest" | "tail" | "model">, id: string, elapsed: number) {
   const seed = race.seeds[id] || 0;
-  if (elapsed < 0) return -(seed % 10) * .008;
+  if (elapsed <= 0) return 0;
   if (elapsed <= race.duration) {
-    const t = elapsed / race.duration;
-    const staging = (seed % 10) * .008 * Math.max(0, 1 - t * 5);
-    return currentDistance(t, seed) / race.normalizer - staging;
+    // Shared, smooth launch from rest; the normalization preserves the exact timer.
+    const launch = (s: number) => s - .35 * (1 - Math.exp(-s / .35));
+    const t = race.model === 3 ? launch(elapsed) / launch(race.duration) : elapsed / race.duration;
+    return currentDistance(t, seed, race.model ?? 2) / race.normalizer;
   }
   const end = finishTime(race, id);
   if (elapsed >= end) return Math.min(1.12, 1 + (elapsed - end) * .018);
-  const atDeadline = currentDistance(1, seed) / race.normalizer;
+  const atDeadline = currentDistance(1, seed, race.model ?? 2) / race.normalizer;
   return atDeadline + (1 - atDeadline) * ((elapsed - race.duration) / Math.max(.000001, end - race.duration));
 }
 export function buildRace(players: Player[], duration: number, now = Date.now()): Race {
   const used = new Set<number>(); const seeds: Record<string, number> = {};
   for (const p of players) { let s: number; do { s = randomInt(4294967295); } while (used.has(s)); used.add(s); seeds[p.id] = s; }
   const scores = players.map(p => ({ id: p.id, score: currentDistance(1, seeds[p.id]), seed: seeds[p.id] })).sort((a, b) => b.score - a.score || a.seed - b.seed);
-  return { id: crypto.randomUUID(), startAt: now + 4000, duration, seeds, normalizer: scores[0].score, slowest: scores.at(-1)!.score / scores[0].score,
+  return { id: crypto.randomUUID(), model: 3, startAt: now + 4000, duration, seeds, normalizer: scores[0].score, slowest: scores.at(-1)!.score / scores[0].score,
     order: scores.map(s => s.id), tail: Math.min(8, 2 + players.length * .035), lanes: shuffle(players.map(p => p.id)), pausedAt: null, pausedMs: 0, endedEarly: false };
 }
 export function normalizeRoom(room: Room): Room {
@@ -99,7 +103,7 @@ export function normalizeRoom(room: Room): Room {
   room.players.forEach((p, i) => { p.skin ||= SKINS[i % SKINS.length].id; });
   if (room.race && !room.race.normalizer) {
     const old = room.race;
-    const totals = Object.values(old.seeds).map(s => currentDistance(1, s));
+    const totals = Object.values(old.seeds).map(s => currentDistance(1, s, 2));
     const normalizer = Math.max(...totals, 1);
     room.race = { ...old, normalizer, slowest: Math.min(...totals, 1) / normalizer, tail: 3,
       lanes: [...old.order], pausedAt: null, pausedMs: 0, endedEarly: true };
@@ -148,7 +152,7 @@ export function publicRoom(room: Room, now = Date.now()) {
   return { pin: room.pin, title: room.title, duration: room.duration, locked: room.locked, state, count: room.players.length, capacity: 200, serverNow: now, scene: room.scene!, distance: room.distance!,
     players: room.players.map(({ id, name, joinedAt, skin }) => ({ id, name, joinedAt, skin: skin! })),
     reactions: (room.reactions || []).filter(v => now - v.at < 6000),
-    race: r ? { id: r.id, startAt: r.startAt, duration: r.duration, seeds: r.seeds, normalizer: r.normalizer, slowest: r.slowest, tail: r.tail, lanes: r.lanes,
+    race: r ? { id: r.id, model: r.model ?? 2, startAt: r.startAt, duration: r.duration, seeds: r.seeds, normalizer: r.normalizer, slowest: r.slowest, tail: r.tail, lanes: r.lanes,
       pausedAt: r.pausedAt, pausedMs: r.pausedMs, endedEarly: r.endedEarly, order: reveal ? r.order : [], finishes: reveal ? Object.fromEntries(r.order.map(id => [id, finishTime(r, id)])) : {} as Record<string, number> } : null };
 }
 export type PublicRoom = ReturnType<typeof publicRoom>;

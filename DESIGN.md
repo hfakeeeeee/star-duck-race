@@ -25,3 +25,15 @@ Vạch xuất phát đặt giữa lòng sông, trải đủ chiều ngang 26 đ�
 Thêm cảnh Đêm ánh sao (night) với ánh trăng, đèn bờ sông và bảng tên tương phản.
 Đồng hồ WebGL chạy bằng performance.now, điều chỉnh sai số đồng bộ từ từ, không đặt lại theo render React.
 Camera làm mượt cả vị trí và hướng nhìn, đáp ứng nhất quán theo thời gian ở các tần số frame khác nhau.
+
+## Xuất phát, dòng sông và nhạc nền
+
+Tất cả mỏ vịt ở cùng tọa độ xuất phát trong suốt đếm ngược; không còn khoảng lùi ngẫu nhiên.
+Làn được chia đối xứng theo số người, camera bám đua thấp hơn và gần hơn, nhìn gần ngang.
+Camera bám kết hợp vịt dẫn đầu với nhóm đầu để chuyển người dẫn đầu không kéo góc nhìn đột ngột.
+Quỹ đạo phiên bản 3 khởi động êm trong 0,35 giây, biên độ tốc độ hành trình 66,5–133,5% trước chuẩn hóa.
+Các cuộc đua đã lưu dùng quỹ đạo cũ và giữ nguyên kết quả/thời gian; mọi phiên bản đều đứng chung vạch lúc bắt đầu.
+Nước dùng nhiều lớp sóng, pháp tuyến theo sóng, gợn nhỏ, phản sáng theo góc nhìn và bọt nước gần bờ.
+Vịt nổi theo cùng cao độ sóng; vệt nước phía sau thay đổi theo vận tốc. Chế độ nhẹ giảm số đỉnh mặt nước.
+Hai bản nhạc gốc Ngày hội STAR / Groove bên dòng sông có trống, bass, hợp âm, giai điệu và biến tấu.
+Nhịp nhạc được lên lịch theo AudioContext, độc lập với tốc độ khung hình; âm lượng và tạm dừng có chuyển êm.

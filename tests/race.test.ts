@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addPlayer, buildRace, cleanName, durationValue, endRace, finishTime, pauseRace, publicRoom, raceElapsed, raceProgress, resumeRace, startRace, stateOf, standings, SKINS, type Room } from "../lib/race.ts";
+import { addPlayer, buildRace, cleanName, currentDistance, durationValue, endRace, finishTime, pauseRace, publicRoom, raceElapsed, raceProgress, resumeRace, startRace, stateOf, standings, SKINS, type Room } from "../lib/race.ts";
 import { parseDelimited, validateNames } from "../lib/import-names.ts";
 const room = (): Room => ({ pin: "123456", owner: "admin", title: "STAR", duration: 60, locked: false, closed: false, players: [], race: null, createdAt: 0 });
 const player = (i: number) => ({ id: String(i), name: `Người ${i}`, tokenHash: `token-${i}`, joinedAt: i, skin: SKINS[i % SKINS.length].id });
@@ -35,6 +35,33 @@ test("same simulation gives the same live standings and exact results on every d
   // Labels and appearance cannot alter the trajectory or ordering.
   a.players.reverse(); a.players.forEach(p => { p.name = "Đổi tên"; p.skin = "ninja"; });
   assert.deepEqual(standings(a, 70).map(p => p.id), final);
+});
+
+test("every duck starts on the same line and sustains cruising speed through smooth passes", () => {
+  const race = buildRace(Array.from({ length: 200 }, (_, i) => player(i)), 60);
+  for (const id of race.order) {
+    for (const t of [-4, -2, -.01, 0]) assert.equal(raceProgress(race, id, t), 0);
+    const speed = (t: number) => (raceProgress(race, id, t + 1 / 120) - raceProgress(race, id, t)) * 120 * 60 * race.normalizer;
+    assert.ok(speed(0) < .025, "Launch should accelerate from rest");
+    let previous = speed(2);
+    for (let t = 2; t < 59.9; t += 1 / 60) {
+      const v = speed(t);
+      assert.ok(v > .66 && v < 1.35, `Cruising speed out of bounds: ${v}`);
+      assert.ok(Math.abs(v - previous) < .004, "No abrupt acceleration between frames"); previous = v;
+    }
+  }
+});
+
+test("stored races without a model keep their previous winners and finish times", () => {
+  const race = buildRace(Array.from({ length: 24 }, (_, i) => player(i)), 20); delete race.model;
+  const totals = Object.entries(race.seeds).map(([id, seed]) => ({ id, total: currentDistance(1, seed, 2) })).sort((a, b) => b.total - a.total);
+  race.normalizer = totals[0].total; race.slowest = totals.at(-1)!.total / race.normalizer;
+  assert.equal(finishTime(race, totals[0].id), 20);
+  for (const { id, total } of totals) {
+    const expected = 20 + race.tail * (1 - total / race.normalizer) / (1 - race.slowest);
+    assert.equal(finishTime(race, id), expected);
+    assert.ok(Math.abs(raceProgress(race, id, 10) - currentDistance(.5, race.seeds[id], 2) / race.normalizer) < 1e-12);
+  }
 });
 test("countdown, paused clocks and finish phase survive serialized reconnects", () => {
   const r = room(); addPlayer(r, player(1)); assert.throws(() => startRace(r), /2 người/); addPlayer(r, player(2)); startRace(r, 1000);

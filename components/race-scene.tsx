@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type * as T from "three";
 import { raceElapsed, raceProgress, SKINS, standings, type PublicRoom } from "../lib/race";
 import { MotionClock, dampFactor } from "../lib/motion";
+import { createRiverWater, riverHeight } from "../lib/river-water";
 
 export type CameraMode = "follow" | "overview" | "mine";
 export type Quality = "auto" | "low";
@@ -51,17 +52,10 @@ export default function RaceScene(props: Props) {
       mesh(box, grass, 80, -.5, -33, 240, 1, 40); mesh(box, grass, 80, -.5, 33, 240, 1, 40);
       const rim = material(night ? "#52687c" : winter ? "#d4e8f5" : "#d2c9a9");
       mesh(box, rim, 80, -.1, -13.8, 240, .5, 1.6); mesh(box, rim, 80, -.1, 13.8, 240, .5, 1.6);
-      const waterGeometry = geometry(new THREE.PlaneGeometry(240, 26, 100, 16)); waterGeometry.rotateX(-Math.PI / 2);
-      const water = material(night ? "#123c61" : sunset ? "#49a8ba" : winter ? "#5bb7d6" : "#39aebb", .27);
-      let timeUniform: { value: number } | undefined;
-      water.onBeforeCompile = shader => {
-        timeUniform = { value: 0 }; shader.uniforms.uRaceTime = timeUniform;
-        shader.vertexShader = "uniform float uRaceTime;\n" + shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(position.x * 0.8 + uRaceTime * 1.3) * 0.055 + cos(position.z * 1.2 + uRaceTime) * 0.04;");
-      };
-      mesh(waterGeometry, water, 80, -.04, 0);
+      const waterGeometry = geometry(new THREE.PlaneGeometry(240, 26, props.quality === "low" ? 180 : 360, props.quality === "low" ? 32 : 64)); waterGeometry.rotateX(-Math.PI / 2);
+      const river = createRiverWater(THREE, night, sunset, winter); materials.add(river.material);
+      mesh(waterGeometry, river.material, 80, -.04, 0);
       const dummy = new THREE.Object3D();
-      const foamMaterial = material(night ? "#3e7998" : "#bce9ed");
-      const foam = new THREE.InstancedMesh(box, foamMaterial, 130); foam.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(foam);
       const bark = material(night ? "#3e414c" : "#94735a"), leaves = material(night ? "#24565d" : winter ? "#3b8475" : "#4e966f"), paleLeaves = material(night ? "#34767a" : winter ? "#ffffff" : "#70ab79");
       if (!stadium) {
         for (let i = 0; i < 36; i++) {
@@ -110,8 +104,8 @@ export default function RaceScene(props: Props) {
       for (const z of [-13, 13]) { mesh(cylinder, navy, LENGTH, 3.5, z, .35, 7, .35); mesh(sphere, gold, LENGTH, 7, z, .6, .6, .6); }
       mesh(box, navy, LENGTH, 6.8, 0, .6, 1.1, 26);
       const gate = banner("VỀ ĐÍCH  ★  STAR", 25, 2); gate.rotation.y = -Math.PI / 2; gate.position.set(LENGTH - .4, 6.5, 0); scene.add(gate);
-      for (let i = 0; i < 26; i++) for (let j = 0; j < 2; j++) mesh(box, (i + j) % 2 ? navy : white, LENGTH + j * .55, .08, -12.5 + i, .55, .03, 1);
-      for (let i = 0; i < 5; i++) mesh(box, i % 2 ? gold : navy, -.6 * i, .08, 0, .3, .03, 26);
+      for (let i = 0; i < 26; i++) for (let j = 0; j < 2; j++) mesh(box, (i + j) % 2 ? navy : white, LENGTH + j * .55, .14, -12.5 + i, .55, .03, 1);
+      for (let i = 0; i < 5; i++) mesh(box, i % 2 ? gold : navy, -.6 * i, .14, 0, .3, .03, 26);
 
       const duckMats = { colored: material("#ffffff", .3), dark: material("#172b63", .4), orange: material("#ed9950", .35), white: material("#fffdf5"), gold };
       const indexes = new Map(room.players.map((p, i) => [p.id, i]));
@@ -152,7 +146,8 @@ export default function RaceScene(props: Props) {
       part(cone, pink, [.45, 1.6, 0], [.29, .65, .29], undefined, hat("party"));
       part(cylinder, material("#aa8d58"), [.45, 1.4, 0], [.44, .08, .44], undefined, hat("explorer"));
       part(cylinder, material("#aa8d58"), [.45, 1.5, 0], [.29, .2, .29], undefined, hat("explorer"));
-      const wake = new THREE.InstancedMesh(geometry(new THREE.RingGeometry(.6, .65, 18, 1, 0, Math.PI * 1.3)), material("#b8e7e9"), room.count); wake.frustumCulled = false; scene.add(wake);
+      const wakeMaterial = new THREE.MeshBasicMaterial({ color: night ? "#8ab5ce" : "#d2f2ee", transparent: true, opacity: .27, depthWrite: false, side: THREE.DoubleSide }); materials.add(wakeMaterial);
+      const wake = new THREE.InstancedMesh(geometry(new THREE.RingGeometry(.46, .49, 32)), wakeMaterial, room.count * 2); wake.frustumCulled = false; wake.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(wake);
       const ring = mesh(torus, gold, 0, .12, 0, 1.05, 1.05, 1.05); ring.rotation.x = Math.PI / 2;
       const ownRing = mesh(torus, navy, 0, .13, 0, 1, 1, 1); ownRing.rotation.x = Math.PI / 2;
       const labels = room.players.map(p => {
@@ -168,7 +163,7 @@ export default function RaceScene(props: Props) {
       const resize = () => { width = node.clientWidth; height = node.clientHeight; renderer.setSize(width, height, false); camera.aspect = width / Math.max(1, height); camera.updateProjectionMatrix(); };
       const observer = new ResizeObserver(resize); observer.observe(node); resize();
       const laneIndex = new Map(race.lanes.map((id, i) => [id, i]));
-      const zFor = (id: string) => { const i = laneIndex.get(id) || 0; const lanes = Math.min(18, Math.max(4, room.count)); return ((i % lanes) / Math.max(1, lanes - 1) - .5) * 20 + Math.floor(i / lanes) * .035; };
+      const zFor = (id: string) => ((laneIndex.get(id) || 0) / Math.max(1, room.count - 1) - .5) * Math.min(20, Math.max(4, (room.count - 1) * 2.2));
       let cachedRank: ReturnType<typeof standings> = [], rankTime = -100;
       function draw() {
         if (disposed) return;
@@ -180,30 +175,47 @@ export default function RaceScene(props: Props) {
           : Math.min(activeRace.duration + activeRace.tail, raceElapsed(activeRace, epoch + now + (latest.offset || 0)));
         const elapsed = renderClock.sample(targetElapsed, rate, now, `${latest.replay ? "replay" : "live"}:${latest.seek || 0}`);
         const animationTime = reduced ? 0 : elapsed;
-        if (timeUniform) timeUniform.value = animationTime;
+        river.time.value = animationTime;
         if (Math.abs(elapsed - rankTime) > .12 || !cachedRank.length) { cachedRank = standings(current.current.room, elapsed); rankTime = elapsed; }
         const lead = cachedRank[0];
         const focalId = mode === "mine" && ownId && indexes.has(ownId) ? ownId : lead?.id;
-        const focalX = focalId ? raceProgress(race, focalId, elapsed) * LENGTH : 0;
+        const pack = cachedRank.slice(0, 5);
+        const leadX = focalId ? raceProgress(race, focalId, elapsed) * LENGTH : 0;
+        const packX = pack.reduce((sum, p) => sum + raceProgress(race, p.id, elapsed) * LENGTH, 0) / Math.max(1, pack.length);
+        const focalX = mode === "mine" ? leadX : leadX * .55 + packX * .45;
         const focalZ = mode === "mine" && focalId ? zFor(focalId) : 0;
         const leaderX = lead ? raceProgress(race, lead.id, elapsed) * LENGTH : 0;
         if (mode === "overview") { desired.set(75, width < 600 ? 155 : 100, width < 600 ? 40 : 104); lookAt.set(80, 0, 0); }
-        else { const x = Math.min(LENGTH + 7, Math.max(-1, focalX)); desired.set(x - (width < 600 ? 10 : 16), width < 600 ? 27 : 19, focalZ + (width < 600 ? 34 : 30)); lookAt.set(x + (width < 600 ? 1 : 9), .2, focalZ); }
+        else {
+          const x = Math.min(LENGTH + 7, Math.max(-1, focalX));
+          // Low, mostly side-on framing keeps a passing duck visibly moving
+          // through the shot. Do not zoom out to fit the entire race spread.
+          desired.set(x - (width < 600 ? 5 : 3), width < 600 ? 13 : 9, focalZ + (width < 600 ? 30 : 23));
+          lookAt.set(x + (width < 600 ? 0 : 3), .4, focalZ);
+        }
         const cameraEase = initialized && !reduced ? dampFactor(dt, 6) : 1;
         camera.position.lerp(desired, cameraEase); smoothLookAt.lerp(lookAt, cameraEase); camera.lookAt(smoothLookAt); initialized = true;
         const zPositions: number[] = [];
         room.players.forEach((p, i) => {
           const size = room.count > 80 ? .76 : 1.05;
-          const progress = raceProgress(race, p.id, elapsed), x = progress * LENGTH - 1.13 * size, z = zFor(p.id) + Math.sin(elapsed * .6 + (race.seeds[p.id] % 9)) * .1;
-          zPositions[i] = z; dummy.position.set(x, Math.sin(animationTime * 3.5 + i) * .045 + .03, z);
+          const launch = 1 - Math.exp(-Math.max(0, elapsed) * 2);
+          const progress = raceProgress(race, p.id, elapsed), x = progress * LENGTH - 1.13 * size, z = zFor(p.id) + Math.sin(elapsed * .6 + (race.seeds[p.id] % 9)) * .1 * launch;
+          const swell = riverHeight(x, z, animationTime);
+          zPositions[i] = z; dummy.position.set(x, swell + .075, z);
           dummy.scale.setScalar(size);
-          dummy.rotation.set(Math.sin(animationTime * 2 + i) * .025, Math.sin(animationTime * .9 + i) * .04, Math.sin(animationTime * 3 + i) * .025);
+          const pitch = (riverHeight(x + .3, z, animationTime) - riverHeight(x - .3, z, animationTime)) / .6;
+          const roll = (riverHeight(x, z + .3, animationTime) - riverHeight(x, z - .3, animationTime)) / .6;
+          dummy.rotation.set(roll * .55 * launch, Math.sin(animationTime * .9 + i) * .025 * launch, pitch * .55 * launch);
           rootMatrices[i].compose(dummy.position, dummy.quaternion, dummy.scale);
-          dummy.position.set(x - .4, .05, z); dummy.rotation.set(-Math.PI / 2, 0, -.4); dummy.scale.set(1.4, .6, 1); dummy.updateMatrix(); wake.setMatrixAt(i, dummy.matrix);
+          const velocity = (raceProgress(race, p.id, elapsed + .04) - progress) * LENGTH / .04;
+          for (let j = 0; j < 2; j++) {
+            const wx = x - .8 - j * .75, spread = 1 + j * .65;
+            dummy.position.set(wx, riverHeight(wx, z, animationTime) + .045, z);
+            dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.scale.set((1.4 + Math.min(1, velocity * .08)) * spread, .85 * spread, 1); dummy.updateMatrix(); wake.setMatrixAt(i * 2 + j, dummy.matrix);
+          }
         });
         parts.forEach(p => { p.players.forEach((idx, j) => { transform.multiplyMatrices(rootMatrices[idx], p.local); p.mesh.setMatrixAt(j, transform); }); p.mesh.instanceMatrix.needsUpdate = true; });
         wake.instanceMatrix.needsUpdate = true;
-        for (let i = 0; i < 130; i++) { const x = -35 + ((i * 7.31 - animationTime * 1.2) % 235 + 235) % 235; dummy.position.set(x, .065, -12 + (i * 1.71) % 24); dummy.rotation.set(0, 0, 0); dummy.scale.set(.5 + i % 4 * .25, .012, .035); dummy.updateMatrix(); foam.setMatrixAt(i, dummy.matrix); } foam.instanceMatrix.needsUpdate = true;
         const noseOffset = 1.13 * (room.count > 80 ? .76 : 1.05);
         ring.position.set(leaderX - noseOffset, .13, lead ? zFor(lead.id) : 0); ring.visible = !!lead && elapsed >= 0;
         ownRing.visible = !!ownId && indexes.has(ownId); if (ownId && ownRing.visible) ownRing.position.set(raceProgress(race, ownId, elapsed) * LENGTH - noseOffset, .14, zFor(ownId));
