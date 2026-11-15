@@ -48,3 +48,13 @@ Camera bám đua chỉ nghiêng xuống theo trục ngang sông, vị trí máy 
 HUD được tách: đồng hồ nhỏ nền navy ở trên trái, thẻ người dẫn đầu ở trên phải, minimap cân giữa phía dưới.
 Minimap gộp cự ly, số vịt và số đã cán đích; chấm vịt giữ làn ổn định khi đổi hạng. Bỏ dòng credit rời ở đáy.
 Giữ màu navy/gold, thêm biến thể nền tối, bố cục gọn cho điện thoại; nhãn vịt tránh vùng HUD trên và dưới.
+
+## Giao diện một khung nhìn và vịt thử nghiệm
+
+Mỗi bước tham gia, tạo phòng, phòng chờ và cuộc đua nằm trong 100dvh; không cuộn cả trang.
+Danh sách người/phòng dài cuộn bên trong khung; bộ chọn vịt, cài đặt và kết quả dùng dialog có chiều cao giới hạn.
+Trang đua bỏ header/footer quảng bá, dành phần lớn màn hình cho đường đua; bảng hạng mở theo yêu cầu.
+Chế độ trình chiếu ẩn thanh công cụ, dùng trọn khung nhìn; nút Thoát trình chiếu hoặc Esc quay lại.
+Tạo phòng có trường Vịt thử nghiệm 0–200. Cài đặt phòng chờ cho đổi số vịt thử mà giữ người thật và giới hạn tổng 200.
+Vịt thử có nhãn riêng, không có quyền điều khiển; dùng cùng quỹ đạo công bằng như người thật.
+QR thu gọn vẫn vuông, bấm để phóng to; thao tác bắt đầu và các nút chính luôn nằm trong khung nhìn.

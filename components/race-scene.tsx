@@ -224,7 +224,7 @@ export default function RaceScene(props: Props) {
           const label = labels[i], place = picked.get(p.id); if (!showLabels || !place) { label.el.style.display = "none"; return; }
           projected.set(raceWorldX(raceProgress(race, p.id, elapsed)) - noseOffset, 2.1, zPositions[i]).project(activeCamera);
           let x = (projected.x * .5 + .5) * width, y = (-projected.y * .5 + .5) * height;
-          const topLimit = width < 600 ? 120 : 132, bottomLimit = height - 110;
+          const topLimit = height < 400 ? 90 : width < 600 ? 120 : 132, bottomLimit = height - (height < 400 ? 74 : 110);
           if (projected.z > 1 || x < 0 || x > width || y < topLimit || y > bottomLimit) { label.el.style.display = "none"; return; }
           const side = width < 600 ? 90 : 110;
           x = Math.max(side, Math.min(width - side, x));

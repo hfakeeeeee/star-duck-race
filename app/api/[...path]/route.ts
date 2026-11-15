@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { addPlayer, cleanName, distanceValue, durationValue, endRace, normalizeRoom, pauseRace, publicRoom, RaceError, randomInt, resumeRace, sceneValue, skinValue, startRace, stateOf, SKINS, type Room } from "../../../lib/race";
+import { addPlayer, cleanName, distanceValue, durationValue, endRace, normalizeRoom, pauseRace, publicRoom, RaceError, randomInt, resumeRace, sceneValue, setTestDucks, skinValue, startRace, stateOf, SKINS, type Room } from "../../../lib/race";
 import { validateNames } from "../../../lib/import-names";
 export const dynamic = "force-dynamic";
 type DBRow = { pin: string; data: string; version: number; expires_at: number };
@@ -53,6 +53,7 @@ async function handle(req: Request) {
       for (let i = 0; i < 20; i++) {
         const pin = String(100000 + randomInt(900000));
         const room: Room = { pin, title, duration, owner, players: [], race: null, locked: false, closed: false, createdAt: Date.now(), scene: sceneValue(body.scene), distance: body.distance === undefined ? 300 : distanceValue(body.distance), reactions: [] };
+        if (body.testCount !== undefined) setTestDucks(room, body.testCount);
         const created = await db().prepare("INSERT OR IGNORE INTO rooms (pin, data, version, expires_at) VALUES (?, ?, 1, ?)").bind(pin, JSON.stringify(room), Date.now() + 86400000).run();
         if (created.meta.changes === 1) return json(publicRoom(room), 201);
       }
@@ -90,11 +91,13 @@ async function handle(req: Request) {
       else if (action === "pause") pauseRace(r);
       else if (action === "resume") resumeRace(r);
       else if (action === "finish") endRace(r);
+      else if (action === "test-ducks") setTestDucks(r, body.count);
       else if (action === "settings") {
         if (r.race) throw new RaceError("Chỉ sửa cài đặt trong phòng chờ.", 409);
         if (body.duration !== undefined) r.duration = durationValue(body.duration);
         if (body.scene !== undefined) r.scene = sceneValue(body.scene);
         if (body.distance !== undefined) r.distance = distanceValue(body.distance);
+        if (body.testCount !== undefined) setTestDucks(r, body.testCount);
       } else if (action === "import") {
         if (r.race || r.locked) throw new RaceError("Hãy mở phòng chờ trước khi thêm danh sách.", 409);
         if (!Array.isArray(body.names)) throw new RaceError("Danh sách không hợp lệ.");

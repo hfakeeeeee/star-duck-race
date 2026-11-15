@@ -20,6 +20,7 @@ try {
   await page.waitForFunction(() => window.__raceAudio?.some(c => c.state === "running"));
   await page.screenshot({ path: `${out}/night-start-desktop.png`, fullPage: true });
   await page.locator(".start-overlay").waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Bảng hạng", exact: true }).click();
   const measurements = await page.evaluate(() => new Promise(resolve => {
     const start = performance.now(), previous = new Map(); let frames = 0, rankChanges = 0, inBetween = 0, worstFrame = 0, last = start;
     function sample(now) {

@@ -21,7 +21,7 @@ export const SCENES = [
   { id: "night", name: "Đêm ánh sao", icon: "🌙" },
 ] as const;
 export type SceneId = typeof SCENES[number]["id"];
-export type Player = { id: string; name: string; tokenHash: string; joinedAt: number; skin?: SkinId; lastReactAt?: number };
+export type Player = { id: string; name: string; tokenHash: string; joinedAt: number; skin?: SkinId; lastReactAt?: number; isTest?: boolean };
 export type Reaction = { id: string; playerId: string; kind: string; at: number };
 export type Race = {
   id: string; startAt: number; duration: number; order: string[]; seeds: Record<string, number>;
@@ -134,6 +134,22 @@ export function startRace(room: Room, now = Date.now()) {
   if (room.players.length < 2) throw new RaceError("Cần ít nhất 2 người để bắt đầu.", 409);
   room.locked = true; room.race = buildRace(room.players, room.duration, now); room.reactions = [];
 }
+export function setTestDucks(room: Room, count: unknown) {
+  if (room.closed) throw new RaceError("Phòng đã đóng.", 410);
+  if (room.race) throw new RaceError("Chỉ thay đổi vịt thử nghiệm trong phòng chờ.", 409);
+  if (typeof count !== "number" || !Number.isInteger(count) || count < 0 || count > 200) throw new RaceError("Số vịt thử nghiệm phải là số nguyên từ 0 đến 200.");
+  const people = room.players.filter(p => !p.isTest), existing = room.players.filter(p => p.isTest);
+  if (people.length + count > 200) throw new RaceError(`Phòng có ${people.length} người thật, chỉ thêm được ${200 - people.length} vịt thử nghiệm.`, 409);
+  const bots = existing.slice(0, count), names = new Set([...people, ...bots].map(p => p.name.toLocaleLowerCase("vi")));
+  let index = 1;
+  while (bots.length < count) {
+    const name = `Vịt thử ${String(index++).padStart(3, "0")}`;
+    if (names.has(name.toLocaleLowerCase("vi"))) continue;
+    names.add(name.toLocaleLowerCase("vi"));
+    bots.push({ id: crypto.randomUUID(), name, tokenHash: `test:${crypto.randomUUID()}`, joinedAt: Date.now(), skin: SKINS[bots.length % SKINS.length].id, isTest: true });
+  }
+  room.players = [...people, ...bots];
+}
 export function pauseRace(room: Room, now = Date.now()) {
   if (!room.race || !["racing", "settling"].includes(stateOf(room, now))) throw new RaceError("Chỉ tạm dừng khi cuộc đua đang diễn ra.", 409);
   room.race.pausedAt = now;
@@ -150,7 +166,7 @@ export function publicRoom(room: Room, now = Date.now()) {
   normalizeRoom(room); const state = stateOf(room, now); const r = room.race;
   const reveal = !!r && raceElapsed(r, now) >= r.duration;
   return { pin: room.pin, title: room.title, duration: room.duration, locked: room.locked, state, count: room.players.length, capacity: 200, serverNow: now, scene: room.scene!, distance: room.distance!,
-    players: room.players.map(({ id, name, joinedAt, skin }) => ({ id, name, joinedAt, skin: skin! })),
+    players: room.players.map(({ id, name, joinedAt, skin, isTest }) => ({ id, name, joinedAt, skin: skin!, isTest: isTest === true })),
     reactions: (room.reactions || []).filter(v => now - v.at < 6000),
     race: r ? { id: r.id, model: r.model ?? 2, startAt: r.startAt, duration: r.duration, seeds: r.seeds, normalizer: r.normalizer, slowest: r.slowest, tail: r.tail, lanes: r.lanes,
       pausedAt: r.pausedAt, pausedMs: r.pausedMs, endedEarly: r.endedEarly, order: reveal ? r.order : [], finishes: reveal ? Object.fromEntries(r.order.map(id => [id, finishTime(r, id)])) : {} as Record<string, number> } : null };

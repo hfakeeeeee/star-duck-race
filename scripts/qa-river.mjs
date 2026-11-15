@@ -28,7 +28,7 @@ try {
     await page.screenshot({ path: `${out}/${scene}-grid.png`, fullPage: true }); await css.evaluate(e => e.remove());
     await page.locator(".start-overlay").waitFor({ state: "hidden" }); await page.waitForTimeout(1700);
     await page.screenshot({ path: `${out}/${scene}-race.png`, fullPage: true });
-    await page.getByLabel("Chất lượng đồ họa", { exact: true }).selectOption("low"); await page.waitForTimeout(300);
+    await page.getByRole("button", { name: "Cài đặt cuộc đua", exact: true }).click(); await page.getByLabel("Chất lượng đồ họa", { exact: true }).selectOption("low"); await page.getByRole("dialog").getByRole("button", { name: "Đóng", exact: true }).click(); await page.waitForTimeout(300);
     await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
     await post(`rooms/${room.pin}/finish`); await page.locator(".results-heading h2").waitFor(); await post(`rooms/${room.pin}/reset`);
     console.log(`PASS ${scene}: aligned grid, close camera, waves, low quality, no WebGL shader errors`);

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addPlayer, buildRace, cleanName, currentDistance, durationValue, endRace, finishTime, pauseRace, publicRoom, raceElapsed, raceProgress, resumeRace, startRace, stateOf, standings, SKINS, type Room } from "../lib/race.ts";
+import { addPlayer, buildRace, cleanName, currentDistance, durationValue, endRace, finishTime, pauseRace, publicRoom, raceElapsed, raceProgress, resumeRace, setTestDucks, startRace, stateOf, standings, SKINS, type Room } from "../lib/race.ts";
 import { parseDelimited, validateNames } from "../lib/import-names.ts";
 const room = (): Room => ({ pin: "123456", owner: "admin", title: "STAR", duration: 60, locked: false, closed: false, players: [], race: null, createdAt: 0 });
 const player = (i: number) => ({ id: String(i), name: `Người ${i}`, tokenHash: `token-${i}`, joinedAt: i, skin: SKINS[i % SKINS.length].id });
@@ -90,4 +90,18 @@ test("CSV import keeps quoted names, chosen columns, Unicode and detects invalid
   assert.throws(() => parseDelimited('"unclosed'), /ngoặc kép/);
   assert.throws(() => validateNames(["An", "an"]), /trùng/); assert.throws(() => validateNames(Array.from({ length: 201 }, (_, i) => `Tên ${i}`)), /200/);
   assert.deepEqual(validateNames([" Nguyễn   An ", "Bình"]), ["Nguyễn An", "Bình"]);
+});
+
+test("test duck settings preserve real participants, stable bot identities and the 200 slot limit", () => {
+  const r = room(); addPlayer(r, player(1)); addPlayer(r, { ...player(2), name: "Vịt thử 001" });
+  setTestDucks(r, 50); assert.equal(r.players.length, 52); assert.equal(r.players.filter(p => p.isTest).length, 50);
+  assert.equal(new Set(r.players.map(p => p.name)).size, 52);
+  const ids = r.players.map(p => p.id); setTestDucks(r, 50); assert.deepEqual(r.players.map(p => p.id), ids);
+  setTestDucks(r, 198); assert.equal(r.players.length, 200);
+  const full = JSON.stringify(r); assert.throws(() => setTestDucks(r, 199), /198/); assert.equal(JSON.stringify(r), full);
+  for (const count of [-1, 201, 2.5, "20", NaN]) assert.throws(() => setTestDucks(r, count));
+  setTestDucks(r, 0); assert.deepEqual(r.players.map(p => p.id), ["1", "2"]);
+  r.locked = true; setTestDucks(r, 2); assert.equal(r.players.length, 4);
+  startRace(r); assert.throws(() => setTestDucks(r, 0), /phòng chờ/);
+  const exposed = publicRoom(r); assert.equal(exposed.players.filter(p => p.isTest).length, 2); assert.ok(!JSON.stringify(exposed).includes("test:"));
 });
