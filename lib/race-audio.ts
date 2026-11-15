@@ -4,7 +4,13 @@ export class RaceAudio {
   private volume = .35;
   private step = 0;
   private track = "bright";
-  unlock() { this.context ||= new AudioContext(); void this.context.resume(); }
+  async unlock() {
+    try {
+      if (!this.context || this.context.state === "closed") this.context = new AudioContext();
+      if (this.context.state !== "running") await this.context.resume();
+      return this.context.state === "running";
+    } catch { return false; }
+  }
   setVolume(value: number) { this.volume = Math.max(0, Math.min(1, value)); }
   private note(frequency: number, duration = .18, strength = .08, type: OscillatorType = "sine", delay = 0) {
     const ac = this.context; if (!ac || ac.state !== "running") return;

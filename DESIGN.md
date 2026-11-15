@@ -16,3 +16,12 @@ Vịt đầu chạm vạch đúng timer; mọi vịt khác cán đích trong t�
 Mô phỏng tốc độ luôn dương, cùng dữ liệu trên mọi thiết bị; thứ hạng suy từ quỹ đạo, không kéo về thứ hạng trong 3 giây cuối.
 Nhạc gốc tổng hợp Web Audio, cổ vũ có giới hạn tần suất, pháo giấy, xem lại cục bộ, CSV/PNG.
 Giữ bản admin thử nghiệm và phạm vi riêng tư, chưa tích hợp tài khoản STAR.
+
+## Chỉnh chuyển động theo phản hồi 15/11/2026
+
+Thẻ bảng hạng trượt 450 ms giữa các ô cố định; có chỉ báo lên/xuống và giữ khóa theo người chơi.
+Vạch xuất phát đặt giữa lòng sông, trải đủ chiều ngang 26 đơn vị.
+Âm thanh mặc định bật; thử phát ngay và mở lại AudioContext ở thao tác đầu tiên nếu autoplay bị trình duyệt chặn.
+Thêm cảnh Đêm ánh sao (night) với ánh trăng, đèn bờ sông và bảng tên tương phản.
+Đồng hồ WebGL chạy bằng performance.now, điều chỉnh sai số đồng bộ từ từ, không đặt lại theo render React.
+Camera làm mượt cả vị trí và hướng nhìn, đáp ứng nhất quán theo thời gian ở các tần số frame khác nhau.

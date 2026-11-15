@@ -18,6 +18,7 @@ export const SCENES = [
   { id: "stadium", name: "Sân vận động", icon: "🏟️" },
   { id: "sunset", name: "Hoàng hôn", icon: "🌅" },
   { id: "winter", name: "Giáng sinh", icon: "🎄" },
+  { id: "night", name: "Đêm ánh sao", icon: "🌙" },
 ] as const;
 export type SceneId = typeof SCENES[number]["id"];
 export type Player = { id: string; name: string; tokenHash: string; joinedAt: number; skin?: SkinId; lastReactAt?: number };

@@ -23,17 +23,19 @@ Trang tham gia: `/`. Trang quản trị: `/?view=admin`. Nút **Đăng nhập th
 - Người chơi nhập PIN/tên, chọn một trong 12 kiểu vịt, vào phòng chờ; tối đa 200 người/phòng. Chặn tên trùng không phân biệt hoa thường. Một thiết bị tham gia lại không tạo bản ghi trùng.
 - Admin nhập danh sách bằng dán tên, CSV/TXT/TSV hoặc Excel `.xlsx` (trang tính đầu); chọn cột tên và xác nhận dòng tiêu đề. Import được áp dụng nguyên lô, không thêm dở khi có lỗi. Tệp được đọc ngay trên trình duyệt; máy chủ chỉ nhận tên.
 - Admin khóa/mở phòng, xóa người, bắt đầu, tạm dừng/tiếp tục, kết thúc sớm, đóng phòng, đua lại giữ danh sách hoặc loại người thắng.
-- Đường đua Three.js/WebGL 3D với 4 khung cảnh, phụ kiện vịt, nước chuyển động, camera theo dẫn đầu/toàn cảnh/vịt của tôi, minimap, bảng hạng và nhãn người dẫn đầu.
+- Đường đua Three.js/WebGL 3D với 5 khung cảnh (gồm Đêm ánh sao), phụ kiện vịt, nước chuyển động, camera theo dẫn đầu/toàn cảnh/vịt của tôi, minimap, bảng hạng trượt khi đổi vị trí và nhãn người dẫn đầu.
 - Đếm ngược trước xuất phát; đồng hồ và hoạt cảnh dựa trên giờ máy chủ. Các seed ngẫu nhiên độc lập sinh quỹ đạo tốc độ dương; thứ hạng suy ra từ quỹ đạo. Tên, skin và làn không ảnh hưởng khả năng thắng.
 - Vịt đầu chạm vạch đúng thời lượng đặt trước; các vịt khác lần lượt cán đích trong tối đa 8 giây tiếp theo. Thời gian đua không tính lúc tạm dừng. Kết thúc sớm giữ nguyên kết quả/quỹ đạo của lượt đó.
 - Bục top 3, thời gian từng vịt, khoảng cách thời gian so với vịt đầu, CSV và PNG đủ toàn bộ danh sách. Xem lại trên máy của mình ở ¼×, ½×, 1× và tua theo timeline, không ảnh hưởng người khác.
-- Biểu cảm cổ vũ được đồng bộ (giới hạn 1 lần/1,5 giây/người), pháo giấy chiến thắng, hai bản nhạc tổng hợp gốc bằng Web Audio, âm báo đổi ngôi/xuất phát/chiến thắng và điều chỉnh âm lượng. Âm thanh mặc định tắt; bật bằng thao tác của người dùng.
+- Biểu cảm cổ vũ được đồng bộ (giới hạn 1 lần/1,5 giây/người), pháo giấy chiến thắng, hai bản nhạc tổng hợp gốc bằng Web Audio, âm báo đổi ngôi/xuất phát/chiến thắng và điều chỉnh âm lượng. Âm thanh mặc định bật; nếu trình duyệt chặn autoplay, AudioContext được mở ở lần chạm hoặc nhấn phím đầu tiên. Người dùng vẫn có nút tắt tiếng.
 - Hai mức đồ họa, mô hình vịt dùng instancing cho 200 người; có Canvas 2D nhẹ nếu thiết bị không hỗ trợ WebGL. Space để admin tạm dừng/tiếp tục, M bật/tắt âm thanh; phím tắt bỏ qua khi đang nhập dữ liệu.
 - Phòng và danh sách lưu trong D1; tải lại trang không mất dữ liệu. Token thiết bị lưu cục bộ, máy chủ chỉ lưu SHA-256. PIN hết hiệu lực sau 24 giờ.
 
 ## Đồng bộ và giới hạn
 
 Client đọc trạng thái mỗi 700 ms; hoạt cảnh nội suy theo thời gian bằng WebGL và cùng công thức trên mọi máy. Độ trễ mạng có thể khiến thiết bị nhận trạng thái bắt đầu/tạm dừng hoặc kết quả muộn. Đồng hồ bù theo thời gian phản hồi máy chủ. Xếp hạng không đổi khi tải lại.
+
+WebGL dùng đồng hồ đơn điệu riêng theo frame; các mẫu thời gian từ giao diện hoặc máy chủ không làm đặt lại tiến trình hoạt cảnh. Hiệu chỉnh clock nhỏ được trải dần, camera làm mượt cả vị trí lẫn hướng nhìn theo delta thời gian. Tạm dừng, tiếp tục và tua replay vẫn đổi trạng thái ngay theo thao tác.
 
 Các cập nhật phòng dùng compare-and-swap theo version trong D1 để tránh ghi đè và vượt sức chứa khi nhiều người tham gia đồng thời. Thứ hạng và thời gian kết quả chỉ được API công bố khi vịt đầu về đích. Seed/quỹ đạo được gửi để mọi thiết bị có thể vẽ và xem lại giống nhau, vì vậy người phân tích dữ liệu vẫn có thể tính trước kết quả. Đây là mô phỏng xác định cho hoạt náo, không phải mô phỏng thủy động lực học đầy đủ hoặc rút thăm có chứng nhận. Việc bình đẳng cơ hội dựa trên seed độc lập và luật chung cho mọi vịt, không phải một kiểm toán thống kê độc lập.
 

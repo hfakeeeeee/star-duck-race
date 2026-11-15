@@ -1,4 +1,4 @@
-// Additional real-browser checks for XLSX, all four scenes and the low graphics mode.
+// Additional real-browser checks for XLSX, all five scenes and the low graphics mode.
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
@@ -25,10 +25,10 @@ try {
   await page.locator('input[type="file"]').setInputFiles({ name: "lop-star.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from(fixture) });
   await page.getByRole("button", { name: "Thêm 2 người", exact: true }).click(); await page.getByRole("dialog").waitFor({ state: "hidden" });
   assert.equal((await (await context.request.get(`${origin}/api/rooms/${room.pin}`)).json()).count, 2); console.log("PASS Real XLSX upload, Vietnamese names, detected name column and header");
-  for (const scene of ["park", "sunset", "stadium", "winter"]) {
+  for (const scene of ["park", "sunset", "stadium", "winter", "night"]) {
     await post(`rooms/${room.pin}/settings`, { scene }); await post(`rooms/${room.pin}/start`); await page.reload(); await page.locator('.race-scene[data-renderer="webgl"]').waitFor({ timeout: 30000 });
     await page.getByLabel("Chất lượng đồ họa", { exact: true }).selectOption("low"); await page.waitForTimeout(500); await page.locator('.race-scene[data-renderer="webgl"]').waitFor();
     await page.screenshot({ path: `${out}/scene-${scene}.png`, fullPage: true }); await post(`rooms/${room.pin}/finish`); await page.locator(".results-heading h2").waitFor(); await post(`rooms/${room.pin}/reset`); console.log(`PASS ${scene}: WebGL, low graphics, result, reset`);
   }
-  await post(`rooms/${room.pin}/close`); assert.deepEqual(errors, []); await writeFile(`${out}/excel-scenes-report.json`, JSON.stringify({ passed: true, scenes: 4, xlsx: true, errors }, null, 2));
+  await post(`rooms/${room.pin}/close`); assert.deepEqual(errors, []); await writeFile(`${out}/excel-scenes-report.json`, JSON.stringify({ passed: true, scenes: 5, xlsx: true, errors }, null, 2));
 } finally { await browser.close(); }

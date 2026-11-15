@@ -44,6 +44,8 @@ try {
   const stopped = await phone.locator(".hud-timer strong").textContent(); await phone.waitForTimeout(1300); assert.equal(await phone.locator(".hud-timer strong").textContent(), stopped);
   const pausedData = await getRoom(pin); assert.equal(pausedData.state, "paused"); await page.getByRole("button", { name: "Tiếp tục đua" }).click(); await phone.locator(".pause-overlay").waitFor({ state: "hidden" }); mark("3D WebGL chạy thật, tạm dừng/tiếp tục giữ cùng đồng hồ trên hai thiết bị");
   await phone.getByRole("button", { name: "Cổ vũ ⭐", exact: true }).click(); await page.locator(".floating-reactions span").waitFor();
+  await page.getByRole("button", { name: "Tắt âm thanh", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Tắt âm thanh", exact: true }).click();
   await page.getByRole("button", { name: "Bật âm thanh", exact: true }).click(); await page.getByRole("button", { name: "Cài đặt âm thanh", exact: true }).click();
   await page.getByLabel("Âm lượng", { exact: true }).fill("0.2"); await page.getByLabel("Nhạc nền", { exact: true }).selectOption("chill"); await page.getByRole("button", { name: "Cài đặt âm thanh", exact: true }).click();
   await page.getByRole("button", { name: "Toàn cảnh", exact: true }).click(); await page.waitForTimeout(700); await page.getByRole("button", { name: "Theo dẫn đầu", exact: true }).click();

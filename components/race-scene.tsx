@@ -1,17 +1,21 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type * as T from "three";
-import { raceProgress, SKINS, standings, type PublicRoom } from "../lib/race";
+import { raceElapsed, raceProgress, SKINS, standings, type PublicRoom } from "../lib/race";
+import { MotionClock, dampFactor } from "../lib/motion";
 
 export type CameraMode = "follow" | "overview" | "mine";
 export type Quality = "auto" | "low";
 const LENGTH = 160;
-type Props = { room: PublicRoom; elapsed: number; ownId?: string; camera: CameraMode; quality: Quality; labels: boolean; rate?: number };
+type Props = { room: PublicRoom; elapsed: number; ownId?: string; camera: CameraMode; quality: Quality; labels: boolean; rate?: number; replay?: boolean; offset?: number; seek?: number };
 
 export default function RaceScene(props: Props) {
   const mount = useRef<HTMLDivElement>(null); const current = useRef({ ...props, sampledAt: 0 });
   const [fallback, setFallback] = useState(false);
-  useEffect(() => { current.current = { ...props, sampledAt: performance.now() }; });
+  useEffect(() => {
+    const changed = props.elapsed !== current.current.elapsed || props.rate !== current.current.rate || props.seek !== current.current.seek;
+    current.current = { ...props, sampledAt: changed ? performance.now() : current.current.sampledAt };
+  });
   useEffect(() => {
     const node = mount.current!; if (!node || !props.room.race) return;
     let disposed = false, cleanup = () => {};
@@ -21,17 +25,17 @@ export default function RaceScene(props: Props) {
       try { renderer = new THREE.WebGLRenderer({ antialias: props.quality !== "low", alpha: false, powerPreference: "high-performance" }); }
       catch { setFallback(true); return; }
       const room = current.current.room, race = room.race!;
-      const winter = room.scene === "winter", sunset = room.scene === "sunset", stadium = room.scene === "stadium";
+      const winter = room.scene === "winter", sunset = room.scene === "sunset", stadium = room.scene === "stadium", night = room.scene === "night";
       renderer.setPixelRatio(Math.min(devicePixelRatio || 1, props.quality === "low" ? 1 : 1.5));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = night ? 1.05 : 1.2;
       node.insertBefore(renderer.domElement, node.firstChild); node.dataset.renderer = "webgl";
       const scene = new THREE.Scene();
-      const sky = sunset ? "#f1c4b4" : winter ? "#b7d5ed" : "#c7e8f5";
+      const sky = night ? "#0b1533" : sunset ? "#f1c4b4" : winter ? "#b7d5ed" : "#c7e8f5";
       scene.background = new THREE.Color(sky); scene.fog = new THREE.Fog(sky, 180, 480);
       const camera = new THREE.PerspectiveCamera(44, 1, .1, 700);
-      scene.add(new THREE.HemisphereLight(sunset ? 0xffede0 : 0xffffff, 0x6a9a8e, 2.8));
-      const sun = new THREE.DirectionalLight(sunset ? 0xffd1a5 : 0xfff3d9, 2.7); sun.position.set(-40, 70, 30); scene.add(sun);
+      scene.add(new THREE.HemisphereLight(night ? 0xa2c5fb : sunset ? 0xffede0 : 0xffffff, night ? 0x243953 : 0x6a9a8e, night ? 1.25 : 2.8));
+      const sun = new THREE.DirectionalLight(night ? 0xb2ceff : sunset ? 0xffd1a5 : 0xfff3d9, night ? 1.6 : 2.7); sun.position.set(-40, 70, 30); scene.add(sun);
       const geometries = new Set<T.BufferGeometry>(), materials = new Set<T.Material>(), textures = new Set<T.Texture>();
       const geometry = <G extends T.BufferGeometry>(g: G) => { geometries.add(g); return g; };
       const material = (color: string, roughness = .65) => { const m = new THREE.MeshStandardMaterial({ color, roughness }); materials.add(m); return m; };
@@ -43,12 +47,12 @@ export default function RaceScene(props: Props) {
       function mesh(g: T.BufferGeometry, m: T.Material, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1) {
         const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); scene.add(o); return o;
       }
-      const grass = material(winter ? "#edf5fc" : sunset ? "#899c76" : "#8bbe80");
+      const grass = material(night ? "#183b42" : winter ? "#edf5fc" : sunset ? "#899c76" : "#8bbe80");
       mesh(box, grass, 80, -.5, -33, 240, 1, 40); mesh(box, grass, 80, -.5, 33, 240, 1, 40);
-      const rim = material(winter ? "#d4e8f5" : "#d2c9a9");
+      const rim = material(night ? "#52687c" : winter ? "#d4e8f5" : "#d2c9a9");
       mesh(box, rim, 80, -.1, -13.8, 240, .5, 1.6); mesh(box, rim, 80, -.1, 13.8, 240, .5, 1.6);
       const waterGeometry = geometry(new THREE.PlaneGeometry(240, 26, 100, 16)); waterGeometry.rotateX(-Math.PI / 2);
-      const water = material(sunset ? "#49a8ba" : winter ? "#5bb7d6" : "#39aebb", .27);
+      const water = material(night ? "#123c61" : sunset ? "#49a8ba" : winter ? "#5bb7d6" : "#39aebb", .27);
       let timeUniform: { value: number } | undefined;
       water.onBeforeCompile = shader => {
         timeUniform = { value: 0 }; shader.uniforms.uRaceTime = timeUniform;
@@ -56,9 +60,9 @@ export default function RaceScene(props: Props) {
       };
       mesh(waterGeometry, water, 80, -.04, 0);
       const dummy = new THREE.Object3D();
-      const foamMaterial = material("#bce9ed");
+      const foamMaterial = material(night ? "#3e7998" : "#bce9ed");
       const foam = new THREE.InstancedMesh(box, foamMaterial, 130); foam.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(foam);
-      const bark = material("#94735a"), leaves = material(winter ? "#3b8475" : "#4e966f"), paleLeaves = material(winter ? "#ffffff" : "#70ab79");
+      const bark = material(night ? "#3e414c" : "#94735a"), leaves = material(night ? "#24565d" : winter ? "#3b8475" : "#4e966f"), paleLeaves = material(night ? "#34767a" : winter ? "#ffffff" : "#70ab79");
       if (!stadium) {
         for (let i = 0; i < 36; i++) {
           const x = -20 + (i % 18) * 13.2, z = (i < 18 ? -1 : 1) * (18 + i % 3 * 3);
@@ -67,7 +71,7 @@ export default function RaceScene(props: Props) {
           mesh(cone, leaves, x, h * .8, z, 1.7, h, 1.7);
           mesh(cone, paleLeaves, x, h * 1.1, z, 1.25, h * .65, 1.25);
         }
-        const mountain = material(sunset ? "#b7a49a" : winter ? "#9ebbd2" : "#aacac1");
+        const mountain = material(night ? "#1b2c50" : sunset ? "#b7a49a" : winter ? "#9ebbd2" : "#aacac1");
         for (let i = 0; i < 12; i++) mesh(cone, mountain, -50 + i * 23, 5, -65 - i % 3 * 8, 19, 28 + i % 3 * 10, 16);
       } else {
         const stand = material("#c1cfe0"), seats = [material("#172b63"), material("#d2aa61"), material("#f8fafc")];
@@ -80,6 +84,19 @@ export default function RaceScene(props: Props) {
         }
       }
       const navy = material("#172b63"), gold = material("#d2aa61"), white = material("#fff9ec");
+      if (night) {
+        const glow = new THREE.MeshBasicMaterial({ color: "#fff0ba" }); materials.add(glow);
+        mesh(sphere, glow, 92, 54, -105, 5, 5, 5);
+        const starGeometry = geometry(new THREE.BufferGeometry()); const starPositions = new Float32Array(100 * 3);
+        for (let i = 0; i < 100; i++) { starPositions[i * 3] = -90 + (i * 73.7) % 360; starPositions[i * 3 + 1] = 25 + (i * 13.3) % 65; starPositions[i * 3 + 2] = -95 - (i * 7.7) % 90; }
+        starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: "#dae9ff", size: .4, transparent: true, opacity: .9 }); materials.add(starMaterial); scene.add(new THREE.Points(starGeometry, starMaterial));
+        for (let i = 0; i < 6; i++) {
+          const x = Math.floor(i / 2) * 80, z = i % 2 ? 16 : -16;
+          mesh(cylinder, navy, x, 2.6, z, .13, 5.2, .13); mesh(sphere, glow, x, 5.3, z, .42, .42, .42);
+          if (i % 2 === 0) { const light = new THREE.PointLight(0xffd49a, 20, 36, 1.4); light.position.set(x, 5, z); scene.add(light); }
+        }
+      }
       function banner(text: string, width: number, height: number, color = "#172b63") {
         const c = document.createElement("canvas"); c.width = 1024; c.height = 160;
         const ctx = c.getContext("2d")!; ctx.fillStyle = color; ctx.fillRect(0, 0, c.width, c.height);
@@ -94,7 +111,7 @@ export default function RaceScene(props: Props) {
       mesh(box, navy, LENGTH, 6.8, 0, .6, 1.1, 26);
       const gate = banner("VỀ ĐÍCH  ★  STAR", 25, 2); gate.rotation.y = -Math.PI / 2; gate.position.set(LENGTH - .4, 6.5, 0); scene.add(gate);
       for (let i = 0; i < 26; i++) for (let j = 0; j < 2; j++) mesh(box, (i + j) % 2 ? navy : white, LENGTH + j * .55, .08, -12.5 + i, .55, .03, 1);
-      for (let i = 0; i < 5; i++) mesh(box, i % 2 ? gold : navy, -.6 * i, .08, -12.5, .3, .03, 25);
+      for (let i = 0; i < 5; i++) mesh(box, i % 2 ? gold : navy, -.6 * i, .08, 0, .3, .03, 26);
 
       const duckMats = { colored: material("#ffffff", .3), dark: material("#172b63", .4), orange: material("#ed9950", .35), white: material("#fffdf5"), gold };
       const indexes = new Map(room.players.map((p, i) => [p.id, i]));
@@ -141,9 +158,11 @@ export default function RaceScene(props: Props) {
       const labels = room.players.map(p => {
         const el = document.createElement("div"); el.className = "duck-label"; el.style.display = "none";
         const rank = document.createElement("b"), name = document.createElement("span"); name.textContent = p.name;
-        el.appendChild(rank); el.appendChild(name); node.appendChild(el); return { el, rank };
+        el.appendChild(rank); el.appendChild(name); node.appendChild(el); return { el, rank, x: 0, y: 0, placed: false };
       });
-      const lookAt = new THREE.Vector3(), desired = new THREE.Vector3(), projected = new THREE.Vector3(), transform = new THREE.Matrix4();
+      const lookAt = new THREE.Vector3(), smoothLookAt = new THREE.Vector3(), desired = new THREE.Vector3(), projected = new THREE.Vector3(), transform = new THREE.Matrix4();
+      const renderClock = new MotionClock(), epoch = Date.now() - performance.now();
+      let lastFrame = performance.now();
       let frame = 0, initialized = false, width = 1, height = 1, frames = 0, lastFps = performance.now();
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
       const resize = () => { width = node.clientWidth; height = node.clientHeight; renderer.setSize(width, height, false); camera.aspect = width / Math.max(1, height); camera.updateProjectionMatrix(); };
@@ -153,8 +172,13 @@ export default function RaceScene(props: Props) {
       let cachedRank: ReturnType<typeof standings> = [], rankTime = -100;
       function draw() {
         if (disposed) return;
+        const now = performance.now(), dt = Math.min(.1, Math.max(0, (now - lastFrame) / 1000)); lastFrame = now;
         const { camera: mode, ownId, labels: showLabels } = current.current;
-        const elapsed = current.current.elapsed + (performance.now() - current.current.sampledAt) / 1000 * (current.current.rate ?? 1);
+        const latest = current.current, activeRace = latest.room.race!;
+        const rate = latest.rate ?? 1;
+        const targetElapsed = latest.replay ? Math.min(activeRace.duration + activeRace.tail, latest.elapsed + (now - latest.sampledAt) / 1000 * rate)
+          : Math.min(activeRace.duration + activeRace.tail, raceElapsed(activeRace, epoch + now + (latest.offset || 0)));
+        const elapsed = renderClock.sample(targetElapsed, rate, now, `${latest.replay ? "replay" : "live"}:${latest.seek || 0}`);
         const animationTime = reduced ? 0 : elapsed;
         if (timeUniform) timeUniform.value = animationTime;
         if (Math.abs(elapsed - rankTime) > .12 || !cachedRank.length) { cachedRank = standings(current.current.room, elapsed); rankTime = elapsed; }
@@ -165,7 +189,8 @@ export default function RaceScene(props: Props) {
         const leaderX = lead ? raceProgress(race, lead.id, elapsed) * LENGTH : 0;
         if (mode === "overview") { desired.set(75, width < 600 ? 155 : 100, width < 600 ? 40 : 104); lookAt.set(80, 0, 0); }
         else { const x = Math.min(LENGTH + 7, Math.max(-1, focalX)); desired.set(x - (width < 600 ? 10 : 16), width < 600 ? 27 : 19, focalZ + (width < 600 ? 34 : 30)); lookAt.set(x + (width < 600 ? 1 : 9), .2, focalZ); }
-        camera.position.lerp(desired, initialized && !reduced ? .075 : 1); camera.lookAt(lookAt); initialized = true;
+        const cameraEase = initialized && !reduced ? dampFactor(dt, 6) : 1;
+        camera.position.lerp(desired, cameraEase); smoothLookAt.lerp(lookAt, cameraEase); camera.lookAt(smoothLookAt); initialized = true;
         const zPositions: number[] = [];
         room.players.forEach((p, i) => {
           const size = room.count > 80 ? .76 : 1.05;
@@ -193,10 +218,12 @@ export default function RaceScene(props: Props) {
           if (projected.z > 1 || x < 0 || x > width || y < 15 || y > height - 20) { label.el.style.display = "none"; return; }
           x = Math.max(80, Math.min(width - 80, x));
           while (boxes.some(b => Math.abs(b.x - x) < 140 && Math.abs(b.y - y) < 26)) y -= 28;
-          boxes.push({ x, y }); label.el.style.display = "flex"; label.el.style.transform = `translate(${x}px,${Math.max(18, y)}px) translate(-50%,-100%)`;
+          boxes.push({ x, y }); const labelEase = label.placed && !reduced ? dampFactor(dt, 14) : 1;
+          label.x += (x - label.x) * labelEase; label.y += (Math.max(18, y) - label.y) * labelEase; label.placed = true;
+          label.el.style.display = "flex"; label.el.style.transform = `translate(${label.x}px,${label.y}px) translate(-50%,-100%)`;
           label.el.classList.toggle("mine", p.id === ownId); label.rank.textContent = `${place}${p.id === ownId ? " · Bạn" : ""}`;
         });
-        frames++; if (performance.now() - lastFps > 1000) { node.dataset.fps = String(Math.round(frames * 1000 / (performance.now() - lastFps))); frames = 0; lastFps = performance.now(); }
+        frames++; if (now - lastFps > 1000) { node.dataset.fps = String(Math.round(frames * 1000 / (now - lastFps))); frames = 0; lastFps = now; }
         frame = requestAnimationFrame(draw);
       }
       draw();
@@ -205,7 +232,7 @@ export default function RaceScene(props: Props) {
     }).catch(() => { if (!disposed) setFallback(true); });
     return () => { disposed = true; cleanup(); };
   }, [props.room.race?.id, props.room.scene, props.quality]);
-  return <div className="race-scene" ref={mount} role="img" aria-label="Đường đua vịt 3D trực tiếp, kết quả và thứ hạng hiển thị trong bảng cạnh bên">{fallback && <FallbackScene {...props} />}</div>;
+  return <div className={`race-scene ${props.room.scene === "night" ? "night-scene" : ""}`} ref={mount} role="img" aria-label="Đường đua vịt 3D trực tiếp, kết quả và thứ hạng hiển thị trong bảng cạnh bên">{fallback && <FallbackScene {...props} />}</div>;
 }
 
 function FallbackScene({ room, elapsed, ownId }: Props) {
