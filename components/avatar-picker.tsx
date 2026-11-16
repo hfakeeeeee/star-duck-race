@@ -41,7 +41,7 @@ export default function AvatarPicker({ value, skin, disabled = false, onChange, 
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" aria-label="Tải ảnh đại diện" hidden disabled={disabled || processing} onChange={event => { void choose(event.target.files?.[0]); event.target.value = ""; }} />
     <button type="button" className="avatar-picker-trigger" disabled={disabled || processing} aria-label={value ? "Đổi ảnh đại diện" : "Chọn ảnh đại diện"} onClick={() => input.current?.click()}>
       <span className="avatar-preview"><PlayerPortrait src={preview} skin={skin} />{processing ? <LoaderCircle size={12} className="avatar-spinner" /> : <Camera size={12} />}</span>
-      <span><strong>Ảnh BXH</strong><small>{processing ? "Đang xử lý…" : value ? "Đổi ảnh" : "Thêm ảnh · tùy chọn"}</small></span>
+      <span><strong>Ảnh BXH</strong><small>{processing ? "Đang xử lý…" : value ? "Đổi ảnh" : "Thêm ảnh"}</small></span>
     </button>
     {value && <button type="button" className="avatar-remove" aria-label="Xóa ảnh đại diện" disabled={disabled || processing} onClick={() => { setError(""); void onChange(null); }}><X size={12} /></button>}
     {error && <p className="avatar-error" role="alert">{error}</p>}

@@ -2,7 +2,7 @@
 
 Phương án A đã duyệt: phòng chờ chia danh sách và PIN/QR; cuộc đua toàn màn hình.
 Màu từ https://star-education.net/: navy #172b63, gold #d2aa61, white.
-Font Be Vietnam Pro; fallback system sans. Flat surfaces, viền nhẹ, không bóng trang trí.
+Font Be Vietnam Pro; fallback system sans. Bề mặt phẳng, viền nhẹ; home/phòng chờ theo hướng Bến sông STAR với mảng màu giấy ấm, xanh nước và navy. Glass dành cho bảng hạng/kết quả.
 UI tiếng Việt. Admin desktop; người chơi điện thoại responsive. Chế độ thử nghiệm, chưa tích hợp STAR.
 Tối đa 200 người. Kết quả và thời gian do máy chủ quyết định.
 
@@ -90,3 +90,20 @@ Phòng chờ, bảng hạng trực tiếp, top 3, bảng kết quả và ảnh P
 Mô hình trên sông, làn, quỹ đạo và cơ hội thắng giữ nguyên theo kiểu vịt đã chọn.
 Chuyển màn dùng màn quét ngôi sao navy/gold và các sao nhỏ tỏa ra trong 0,86 giây; không trì hoãn API hoặc đồng hồ đua.
 Không phát lại chuyển cảnh theo mỗi lần polling; giảm chuyển động tắt màn quét, trang vẫn chuyển ngay và nút thao tác không bị chặn.
+
+## Bến sông STAR và giao diện sáng/tối — 17/11/2026
+
+Người dùng cho phép tự chọn hướng và dựng luôn. Home ưu tiên việc nhập PIN, chọn vịt/avatar và vào phòng; phòng chờ ưu tiên đội hình, PIN/QR và nút vào đường đua.
+Home dùng mảng bến sông bên trái, form không khung bên phải. Mobile là banner bến sông gọn trên form; màn ngang vẫn hai cột. Ô nhập trơn, không thêm icon bên trái.
+Phòng chờ giữ danh sách và khu mời bạn, thêm banner navy mang tên phòng, nền giấy ấm và sông nhỏ trong thẻ mời ở màn đủ cao. Người chơi có vùng chờ xanh nước riêng.
+Mỗi loại control dùng lại component hiện có: SkinPicker, AvatarPicker, Dialog, Avatar, DropdownMenu; font Be Vietnam Pro, logo và vai màu STAR giữ nguyên.
+Sắc: Tinted theo yêu cầu có màu hơn. Navy là nhận diện; vàng là điểm nhấn/hành động trên nền tối; xanh nước dành cho cảnh bến sông. Không dùng màu trang trí để thay nghĩa trạng thái.
+
+Theme dùng next-themes đã có trong dự án: Sáng / Tối / Hệ thống, mặc định Hệ thống, nhớ theo thiết bị ở khóa `star-duck-theme`. Script áp theme trước khi vẽ, không lóe nền sáng; menu mở ba lựa chọn cùng lúc và đánh dấu mục đã chọn.
+Token giao diện ở `components/theme.css`; màu/font gốc ở `app/globals.css`. Nền tối có các tầng trang → bề mặt → hộp thoại sáng dần; ô nhập, menu, avatar picker, HUD, đếm ngược và tạm dừng đều có màu tối riêng. Theme giao diện không đổi khung cảnh 3D mà admin đã chọn.
+
+Motion dùng CSS transform/opacity: vịt nhấp nhô lệch nhịp, hai lớp dòng nước trôi, sao nhỏ nhấp nháy, thẻ người mới hiện vào và số người pop một lần. Không đặt animation vô hạn trên 200 thẻ; key người chơi giữ nguyên khi polling nên thẻ không xuất hiện lại. Giảm chuyển động tắt các motion trang và menu.
+Luồng: Home → nhập PIN/tên, chọn vịt/ảnh → phòng chờ → admin đưa cả phòng vào đường đua → bắt đầu tại màn đua. Không thêm bước hoặc dữ liệu giả vào luồng thật. Không cần nối thêm API.
+
+Kiểm bằng mắt: thẻ người chơi cùng chiều cao; nút/đường dẫn nhận ra được; form home bỏ khung lồng; banner/đội hình/khu mời tách rõ; vùng rộng dành cho cảnh sông và đội hình; nút Vào phòng chờ/Vào đường đua là hành động chính. Màn 320 px dùng danh sách một cột để tên dễ đọc.
+Kiểm trình duyệt: light/dark/system, lưu lựa chọn sau reload, đổi theme theo hệ thống, menu bàn phím, reduced-motion, 320/375/768/844/1440/1920; avatar và cuộc đua vẫn dùng dữ liệu phòng thật. Ảnh và báo cáo đối chiếu ở `outputs/qa-club` (không đưa vào bản triển khai).

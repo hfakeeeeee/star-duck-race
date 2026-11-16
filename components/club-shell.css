@@ -1,0 +1,235 @@
+/* STAR River Club: warm paper, a harbor scene and one clear place to join. */
+.club-shell:not(.race-mode) { background: var(--club-paper); }
+.club-shell:not(.race-mode) > .site-header { width: 100%; max-width: none; margin: 0; padding: 0 4%; height: 72px; flex-basis: 72px; border: 0; background: transparent; }
+.club-shell .site-header .header-actions { gap: 10px; }
+.club-shell .site-header .icon-btn { width: 36px; height: 36px; font-size: 12px; }
+.club-shell .site-header .nav-link { min-height: 36px; height: 36px; font-size: 12px; }
+.club-shell .site-header .mock-tag { background: transparent; border: 0; color: var(--muted); }
+.club-shell .brand-symbol { background: #e7c582; color: var(--brand-navy); border: 0; border-radius: 12px; }
+.club-shell:not(.race-mode) > .site-footer { width: 100%; max-width: none; padding: 0 4% 12px; height: 30px; flex-basis: 30px; font-size: 12px; }
+.club-shell .club-home { width: auto; max-width: none; flex: 1; min-height: 0; margin: 4px 4% 18px; padding: 0; display: grid; grid-template-columns: minmax(0,1.45fr) minmax(320px,.85fr); gap: 24px; align-items: stretch; }
+.club-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1.7px; line-height: 1.5; color: var(--club-water-ink); }
+.club-shell .home-harbor { position: relative; isolation: isolate; overflow: hidden; border-radius: 26px; background: var(--club-field); padding: 36px 36px 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.club-shell .home-harbor h1 { font-size: clamp(32px,3.7vw,56px); line-height: 1.16; letter-spacing: -2px; margin: 22px 0 14px; color: var(--club-ink); }
+.club-shell .home-harbor p { font-size: 14px; line-height: 1.85; color: var(--club-muted); }
+.harbor-copy { position: relative; z-index: 2; flex: 0 0 auto; }
+.harbor-meta { display: flex; gap: 18px; margin-top: 22px; color: var(--club-water-ink); font-size: 12px; letter-spacing: .7px; text-transform: uppercase; }
+.harbor-river { flex: 1; min-height: 135px; position: relative; isolation: isolate; overflow: hidden; background: var(--club-water); border-radius: 50% 40% 0 0 / 16% 12% 0 0; margin: 18px -36px 0; }
+.harbor-current { position: absolute; pointer-events: none; inset: 18px -120px; background: repeating-linear-gradient(-8deg, transparent 0 48px, #fff4 49px 50px, transparent 51px 80px); animation: harbor-current 14s linear infinite; }
+.harbor-current.current-two { opacity: .4; animation-duration: 24s; animation-direction: reverse; }
+.harbor-course { position: absolute; inset: 20% 8% 12%; border-bottom: 1px dashed var(--club-water-ink); border-radius: 50%; opacity: .17; }
+.harbor-duck { position: absolute; z-index: 1; width: clamp(76px,8.3vw,124px); left: 44%; bottom: 19%; animation: harbor-bob 3.6s ease-in-out infinite; }
+.harbor-duck > .duck { display: block; width: 100%; height: auto; position: relative; z-index: 1; }
+.harbor-duck:after { content: ''; position: absolute; inset: auto -6% 0; height: 12px; border: 1px solid var(--club-water-ink); border-radius: 50%; opacity: .25; }
+.harbor-duck.duck-two { width: clamp(58px,5.7vw,82px); left: 18%; bottom: 14%; animation-delay: -1.4s; }
+.harbor-duck.duck-three { width: clamp(48px,4.7vw,68px); left: 76%; bottom: 35%; animation-delay: -2s; }
+.harbor-buoy { position: absolute; color: var(--club-water-ink); left: 12%; top: 23%; animation: harbor-spark 5s ease-in-out infinite; }
+.harbor-buoy.buoy-two { left: 87%; top: 52%; animation-delay: -2s; }
+.harbor-river-caption { position: absolute; left: 28px; bottom: 19px; font-size: 12px; font-weight: 500; letter-spacing: 1px; color: var(--club-water-ink); }
+.club-shell .club-home .home-form-wrap { display: flex; flex-direction: column; justify-content: center; width: 100%; max-width: none; min-width: 0; padding: 24px 18px; }
+.club-shell .club-home .join-form { background: transparent; border: 0; box-shadow: none; border-radius: 0; padding: 0; gap: 18px; }
+.club-shell .club-home .form-heading h2 { font-size: clamp(23px,2.2vw,31px); letter-spacing: -.8px; margin: 12px 0 8px; }
+.club-shell .club-home .form-heading p { font-size: 13px; color: var(--club-muted); }
+.club-shell .club-home .form-heading .club-eyebrow { color: var(--club-muted); font-size: 12px; font-weight: 500; }
+.club-shell .club-home .join-form label { font-size: 12px; margin: 0 0 8px; }
+.club-shell .club-home .join-fields { gap: 18px; }
+.club-shell .club-home .join-form input { height: 48px; background: var(--surface); }
+.club-shell .club-home .join-form .pin-input { font-size: 25px; }
+.club-shell .club-home .join-form .primary { height: 48px; border-radius: 10px; font-size: 13px; }
+.club-shell .club-home .join-identity { gap: 8px; grid-template-columns: minmax(0,1fr) 146px; }
+.club-shell .club-home .skin-picker-trigger, .club-shell .club-home .avatar-picker-trigger { min-height: 58px; background: var(--surface); }
+.club-shell .club-home .form-footnote { justify-content: flex-start; font-size: 12px; }
+.club-shell .club-home .how-to { margin-top: 22px; padding: 0; justify-content: flex-start; gap: 12px; font-size: 12px; color: var(--club-muted); }
+.club-shell .avatar-picker-trigger strong { font-size: 12px; }
+.club-shell .avatar-picker-trigger small { font-size: 12px; }
+.club-shell .club-home .how-to b { font-weight: 500; color: var(--foreground); }
+.club-shell .club-home .how-to > span { color: var(--club-muted); }
+.club-shell .site-footer .footer-separator { color: var(--muted); }
+.club-shell:not(.race-mode) .room-page { width: auto; max-width: none; margin: 2px 4% 0; padding: 0 0 10px; }
+.club-shell:not(.race-mode) .room-page > .room-heading { position: relative; isolation: isolate; overflow: hidden; flex: 0 0 auto; min-height: 104px; margin-bottom: 20px; border-radius: 20px; padding: 22px 28px; background: var(--brand-navy); color: var(--club-on-navy); }
+.club-shell:not(.race-mode) .room-heading h1 { color: var(--club-on-navy); font-size: 25px; letter-spacing: -.7px; line-height: 1.5; margin-top: 7px; }
+.club-shell:not(.race-mode) .room-heading-copy, .club-shell:not(.race-mode) .room-tools { position: relative; z-index: 1; }
+.club-shell:not(.race-mode) .room-eyebrow .pill { background: transparent; padding: 0; border: 0; color: #f0cd8e; font-size: 11px; letter-spacing: .6px; }
+.club-shell:not(.race-mode) .room-heading .connection { color: var(--club-on-navy-muted); }
+.club-shell:not(.race-mode) .room-heading .connection > i { background: #7edab9; }
+.club-shell:not(.race-mode) .room-heading .room-pin-small { color: var(--club-on-navy-muted); }
+.club-shell:not(.race-mode) .room-heading .room-pin-small strong { color: #f0cd8e; }
+.club-shell:not(.race-mode) .room-heading .btn, .club-shell:not(.race-mode) .room-heading .icon-btn { color: var(--club-on-navy); background: #ffffff08; border-color: #ffffff40; }
+.club-shell:not(.race-mode) .room-heading .btn:hover, .club-shell:not(.race-mode) .room-heading .icon-btn:hover { background: #ffffff16; }
+.lobby-banner-stars { position: absolute; right: 24%; top: -20px; color: #d2aa611a; pointer-events: none; }
+.lobby-banner-stars svg:first-child { transform: rotate(12deg); }
+.lobby-banner-stars svg:last-child { position: absolute; left: -40px; bottom: 3px; color: #e1be7c70; animation: harbor-spark 4s ease-in-out infinite; }
+.club-shell .lobby-grid { gap: 26px; grid-template-columns: minmax(0,1fr) 280px; }
+.club-shell .participants-card { border: 0; border-radius: 0; padding: 8px 0; background: transparent; box-shadow: none; }
+.club-shell .participants-card > .section-heading { margin-bottom: 18px; }
+.club-shell .participants-card .section-heading h2 { font-size: 15px; }
+.club-shell .count-badge { padding: 4px 7px; background: var(--club-field); color: var(--foreground); }
+.club-shell .count-badge b { display: inline-block; animation: club-count .24s ease-out; }
+.club-shell .count-badge > span { color: var(--muted); }
+.club-shell .participants-card .player-grid { gap: 9px; grid-template-columns: repeat(auto-fill,minmax(min(220px,100%),1fr)); padding: 1px 4px 6px 0; }
+.club-shell .player-chip { background: var(--surface); border-color: var(--border); border-radius: 10px; min-height: 54px; padding: 8px 10px; animation: club-arrive .35s ease both; }
+.club-shell .player-chip:nth-child(3n+2) { animation-delay: 30ms; }
+.club-shell .player-chip:nth-child(3n) { animation-delay: 60ms; }
+.club-shell .player-chip.is-own { border-color: var(--gold); background: var(--gold-light); }
+.club-shell .player-chip > span:not(.player-portrait) { color: var(--foreground); font-size: 12px; }
+.club-shell .remove-player { background: transparent; color: var(--muted); border-radius: 6px; min-width: 32px; min-height: 32px; }
+.club-shell .remove-player:hover { background: var(--danger-bg); color: var(--danger); }
+.club-shell .test-player-tag { background: var(--primary-light); color: var(--muted); }
+.club-shell .lobby-bottom { border-color: var(--border); min-height: 40px; padding-top: 12px; margin-top: 12px; }
+.club-shell .invite-card { width: 100%; align-self: stretch; justify-content: center; background: var(--surface); border-color: var(--border); border-radius: 18px; padding: 22px; }
+.club-shell .invite-card .big-pin { font-size: 34px; color: var(--foreground); letter-spacing: 5px; }
+.club-shell .invite-card .qr-wrap img { width: 132px; height: 132px; border-radius: 6px; background: #fff; }
+.club-shell .invite-card .qr-wrap { width: 132px; height: 132px; }
+.club-shell .invite-card .pin-label { color: var(--muted); font-size: 11px; }
+.club-shell .invite-card .section-heading { margin-bottom: 12px; }
+.club-shell .invite-card .start-btn { font-size: 12px; min-height: 44px; }
+.club-shell .invite-card .start-help { font-size: 10px; line-height: 1.8; }
+.club-shell .invite-card .lobby-race-summary { color: var(--muted); }
+.club-shell .invite-card .harbor-river-small { flex: 0 0 48px; width: 100%; min-height: 0; height: 48px; margin: 0 0 18px; border-radius: 12px; }
+.harbor-river-small .harbor-duck.duck-one { width: 38px; bottom: -1px; left: 43%; }
+.harbor-river-small .harbor-duck.duck-two { width: 26px; bottom: 3px; left: 16%; }
+.harbor-river-small .harbor-duck.duck-three { width: 24px; bottom: 5px; left: 78%; }
+.harbor-river-small .harbor-buoy, .harbor-river-small .harbor-course { display: none; }
+.club-shell .player-wait-card { background: var(--club-field); border: 0; border-radius: 20px; padding: 24px; overflow: hidden; }
+.club-shell .waiting-orbit { background: var(--club-water); border: 1px solid #ffffff30; position: relative; }
+.club-shell .waiting-orbit > .duck { animation: harbor-bob 3.6s ease-in-out infinite; }
+.club-shell .player-wait-card h2 { color: var(--foreground); }
+.club-shell .player-wait-card p { color: var(--club-muted); }
+.club-shell .player-wait-card .waiting-duration { color: var(--club-water-ink); }
+.club-shell .lobby-cheers button { background: var(--surface); border: 1px solid var(--border); transition: transform .18s ease, background-color .18s; }
+.club-shell .lobby-cheers button:hover { transform: translateY(-3px); background: var(--gold-light); }
+.club-shell .lobby-empty .empty-ducks > .duck:first-child { animation: harbor-bob 3.6s ease-in-out infinite; }
+.club-shell .room-join .join-form { background: var(--surface); border-color: var(--border); }
+.club-shell .room-footer .nav-link { min-height: 32px; padding: 6px 0; }
+@keyframes harbor-bob { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-7px) rotate(2deg); } }
+@keyframes harbor-current { to { transform: translateX(80px); } }
+@keyframes harbor-spark { 50% { opacity: .45; transform: scale(.85); } }
+@keyframes club-arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes club-count { from { transform: scale(1.2); } to { transform: scale(1); } }
+@media (max-width: 1050px) and (min-width: 768px) {
+  .club-shell .club-home { grid-template-columns: minmax(0,1fr) minmax(300px,1fr); gap: 16px; }
+  .club-shell .home-harbor { padding: 28px 24px 0; }
+  .club-shell .home-harbor h1 { font-size: 39px; }
+  .club-shell .home-harbor p { font-size: 12px; }
+  .harbor-meta { font-size: 12px; gap: 12px; flex-wrap: wrap; }
+  .home-harbor .harbor-river { margin-left: -24px; margin-right: -24px; }
+  .club-shell .club-home .home-form-wrap { padding: 20px 0; }
+  .club-shell .lobby-grid { gap: 18px; grid-template-columns: minmax(0,1fr) 250px; }
+}
+@media (max-height: 790px) and (min-width: 768px) {
+  .club-shell .invite-card .harbor-river-small { display: none; }
+  .club-shell .home-harbor { padding-top: 26px; }
+  .club-shell .home-harbor h1 { font-size: clamp(30px,3.3vw,48px); margin-top: 16px; }
+  .harbor-meta { margin-top: 14px; }
+  .club-shell .club-home .join-form { gap: 14px; }
+}
+@media (max-width: 767px) {
+  .club-shell:not(.race-mode) > .site-header { height: 56px; flex-basis: 56px; padding: 0 16px; }
+  .club-shell .brand .brand-education { display: none; }
+  .club-shell .site-header .header-actions { gap: 6px; }
+  .club-shell .site-header .icon-btn { width: 34px; height: 34px; }
+  .club-shell .site-header .nav-link { font-size: 12px; gap: 4px; }
+  .club-shell .site-header .nav-link > svg:last-child:not(:first-child) { display: none; }
+  .club-shell:not(.race-mode) > .site-footer { display: none; }
+  .club-shell .club-home { margin: 0 14px 16px; width: auto; max-width: none; gap: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .club-shell .home-harbor { flex: 0 0 150px; padding: 18px 20px; border-radius: 20px; }
+  .club-shell .home-harbor .club-eyebrow { font-size: 12px; letter-spacing: 1px; }
+  .club-shell .home-harbor h1 { font-size: 27px; line-height: 1.22; letter-spacing: -1px; margin: 12px 0 0; max-width: 230px; }
+  .club-shell .home-harbor .harbor-copy > p, .club-shell .home-harbor .harbor-meta { display: none; }
+  .home-harbor .harbor-river { position: absolute; left: 57%; top: 0; bottom: 0; width: 43%; margin: 0; min-height: 0; border-radius: 45% 0 0 40%; }
+  .home-harbor .harbor-duck.duck-one { width: 66px; left: 32%; bottom: 22%; }
+  .home-harbor .harbor-duck.duck-two { width: 42px; left: 56%; bottom: 42%; }
+  .home-harbor .harbor-duck.duck-three, .home-harbor .harbor-river-caption, .home-harbor .harbor-course, .home-harbor .harbor-buoy { display: none; }
+  .club-shell .club-home .home-form-wrap { flex: 1; min-height: 0; max-width: none; width: 100%; padding: 22px 6px 0; justify-content: flex-start; }
+  .club-shell .club-home .join-form { gap: 15px; }
+  .club-shell .club-home .form-heading > .club-eyebrow { display: none; }
+  .club-shell .club-home .form-heading h2 { font-size: 23px; letter-spacing: -.5px; margin: 0 0 6px; }
+  .club-shell .club-home .form-heading p { font-size: 12px; margin: 0; }
+  .club-shell .club-home .join-fields { gap: 14px; }
+  .club-shell .club-home .join-form input { height: 44px; }
+  .club-shell .club-home .join-form .primary { height: 44px; }
+  .club-shell .club-home .join-form .pin-input { font-size: 24px; }
+  .club-shell .club-home .join-identity { grid-template-columns: minmax(0,1fr) 138px; gap: 7px; }
+  .club-shell .club-home .skin-picker-trigger, .club-shell .club-home .avatar-picker-trigger { min-height: 54px; }
+  .club-shell .club-home .how-to { margin-top: 16px; gap: 9px; font-size: 10px; display: flex; }
+  .club-shell .club-home .join-form .form-footnote { font-size: 12px; }
+  .club-shell:not(.race-mode) .room-page { margin: 0 14px; padding: 0 0 10px; }
+  .club-shell:not(.race-mode) .room-page > .room-heading { min-height: 100px; padding: 16px; margin-bottom: 14px; border-radius: 16px; gap: 12px; }
+  .club-shell:not(.race-mode) .room-heading h1 { font-size: 18px; letter-spacing: -.4px; margin-top: 8px; }
+  .club-shell:not(.race-mode) .room-heading .room-tools { flex-wrap: nowrap; gap: 5px; }
+  .club-shell:not(.race-mode) .room-heading .room-pin-small { display: none; }
+  .club-shell:not(.race-mode) .room-heading .room-settings-button { width: 32px; height: 32px; padding: 0; font-size: 0; gap: 0; }
+  .club-shell:not(.race-mode) .room-heading .room-settings-button svg { width: 16px; height: 16px; }
+  .lobby-banner-stars { right: 12%; top: -16px; }
+  .club-shell .lobby-grid { gap: 12px; }
+  .club-shell .participants-card { padding: 0; }
+  .club-shell .participants-card > .section-heading { margin-bottom: 10px; }
+  .club-shell .participants-card .section-heading h2 { font-size: 12px; }
+  .club-shell .participants-card .player-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+  .club-shell .player-chip { min-height: 44px; padding: 6px; gap: 6px; }
+  .club-shell .player-chip > span:not(.player-portrait) { font-size: 11px; }
+  .club-shell .lobby-bottom { padding-top: 8px; margin-top: 8px; min-height: 30px; }
+  .club-shell .invite-card { padding: 12px; border-radius: 14px; }
+  .club-shell .invite-card .harbor-river-small { display: none; }
+  .club-shell .invite-card .qr-wrap, .club-shell .invite-card .qr-wrap img { width: 72px; height: 72px; }
+  .club-shell .invite-card .big-pin { font-size: 26px; letter-spacing: 4px; }
+  .club-shell .invite-card .copy-link { min-width: 32px; min-height: 32px; }
+  .club-shell .invite-card .start-btn { min-height: 40px; font-size: 12px; }
+  .club-shell .invite-card .start-help { font-size: 9px; line-height: 1.6; }
+  .club-shell .player-wait-card { padding: 14px; border-radius: 16px; }
+}
+@media (max-height: 650px) and (max-width: 767px) {
+  .club-shell .home-harbor { flex-basis: 98px; padding: 12px 17px; }
+  .club-shell .home-harbor h1 { font-size: 23px; margin-top: 7px; }
+  .club-shell .home-harbor .club-eyebrow { font-size: 8px; }
+  .home-harbor .harbor-duck.duck-one { width: 52px; bottom: 12%; }
+  .home-harbor .harbor-duck.duck-two { width: 32px; bottom: 40%; }
+  .club-shell .club-home .home-form-wrap { padding-top: 14px; }
+  .club-shell .club-home .join-form { gap: 10px; }
+  .club-shell .club-home .form-heading h2 { font-size: 21px; }
+  .club-shell .club-home .form-heading p { display: none; }
+  .club-shell .club-home .join-fields { gap: 10px; }
+  .club-shell .club-home .join-form label { margin-bottom: 5px; }
+  .club-shell .club-home .join-form input, .club-shell .club-home .join-form .primary { height: 40px; }
+  .club-shell .club-home .skin-picker-trigger, .club-shell .club-home .avatar-picker-trigger { min-height: 48px; }
+  .club-shell .club-home .how-to { margin-top: 11px; }
+  .club-shell:not(.race-mode) .room-page > .room-heading { min-height: 78px; padding: 10px 12px; margin-bottom: 10px; }
+  .club-shell:not(.race-mode) .room-heading h1 { font-size: 16px; margin-top: 4px; }
+  .club-shell .participants-card > .section-heading { margin-bottom: 8px; }
+}
+@media (max-width: 360px) {
+  .club-shell .participants-card .player-grid { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-height: 480px) and (min-width: 600px) {
+  .club-shell:not(.race-mode) > .site-header { height: 48px; flex-basis: 48px; }
+  .club-shell:not(.race-mode) > .site-footer { display: none; }
+  .club-shell .club-home { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); gap: 24px; margin-bottom: 12px; }
+  .club-shell .home-harbor { display: flex; padding: 18px 20px 0; }
+  .club-shell .home-harbor h1 { font-size: 28px; margin-top: 13px; }
+  .club-shell .home-harbor .harbor-copy > p, .club-shell .home-harbor .harbor-meta { display: none; }
+  .home-harbor .harbor-river { position: relative; inset: auto; width: auto; min-height: 100px; margin: 10px -20px 0; border-radius: 50% 40% 0 0 / 16% 12% 0 0; }
+  .home-harbor .harbor-duck.duck-one { width: 55px; left: 44%; bottom: 13%; }
+  .home-harbor .harbor-duck.duck-two { width: 40px; left: 16%; bottom: 16%; }
+  .home-harbor .harbor-duck.duck-three, .home-harbor .harbor-river-caption { display: none; }
+  .club-shell .club-home .home-form-wrap { padding: 4px 0; }
+  .club-shell .club-home .join-form { display: flex; gap: 9px; }
+  .club-shell .club-home .join-fields { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .club-shell .club-home .form-heading .club-eyebrow, .club-shell .club-home .form-heading p, .club-shell .club-home .how-to, .club-shell .club-home .form-footnote { display: none; }
+  .club-shell .club-home .form-heading h2 { font-size: 23px; margin: 4px 0 8px; }
+  .club-shell .club-home .join-form input, .club-shell .club-home .join-form .primary { height: 40px; }
+  .club-shell .club-home .skin-picker-trigger, .club-shell .club-home .avatar-picker-trigger { min-height: 46px; }
+  .club-shell:not(.race-mode) .room-page > .room-heading { min-height: 52px; padding: 8px 14px; margin-bottom: 10px; border-radius: 12px; }
+  .club-shell:not(.race-mode) .room-heading h1 { font-size: 17px; margin: 0; }
+  .club-shell:not(.race-mode) .room-heading .connection { display: none; }
+  .club-shell .invite-card { display: flex; padding: 12px; }
+  .club-shell .invite-card .harbor-river-small { display: none; }
+  .club-shell .invite-card .qr-wrap, .club-shell .invite-card .qr-wrap img { width: 72px; height: 72px; }
+  .club-shell .invite-card .big-pin { font-size: 26px; }
+  .club-shell .invite-card .start-help { display: none; }
+  .club-shell .invite-card .lobby-race-summary { margin: 7px 0; padding-top: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .harbor-duck, .harbor-current, .harbor-buoy, .lobby-banner-stars svg, .club-shell .player-chip, .club-shell .count-badge b, .club-shell .waiting-orbit > .duck, .club-shell .lobby-empty .empty-ducks > .duck { animation: none; }
+  .club-shell .lobby-cheers button { transition: none; }
+  .club-shell .lobby-cheers button:hover { transform: none; }
+}

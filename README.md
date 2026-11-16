@@ -32,6 +32,8 @@ Trang tham gia: `/`. Trang quản trị: `/?view=admin`. Nút **Đăng nhập th
 - Phòng và danh sách lưu trong D1; tải lại trang không mất dữ liệu. Token thiết bị lưu cục bộ, máy chủ chỉ lưu SHA-256. PIN hết hiệu lực sau 24 giờ.
 - Avatar ảnh tùy chọn (JPG/PNG/WebP, tối đa 5 MB): cắt giữa và thu gọn JPEG 128 px trước khi lưu R2. Bảng hạng/top 3/PNG hiện ảnh; trên sông vẫn là vịt. Có thể đổi/xóa ảnh trong phòng chờ.
 - Bảng hạng mặc định ẩn khi vào cuộc đua. Chuyển trang có hiệu ứng ngôi sao STAR, tự tắt khi người dùng bật giảm chuyển động.
+- Giao diện Sáng / Tối / Hệ thống qua nút Giao diện; mặc định theo thiết bị, lưu lựa chọn và áp trước khi vẽ để không lóe nền sáng.
+- Home/phòng chờ dùng hướng Bến sông STAR: nền giấy ấm, mảng navy/xanh nước, vịt và dòng sông chuyển động nhẹ; thẻ người mới có hiệu ứng xuất hiện. Giữ một khung nhìn, danh sách cuộn bên trong và hỗ trợ giảm chuyển động.
 
 ## Đồng bộ và giới hạn
 

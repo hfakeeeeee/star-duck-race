@@ -18,8 +18,8 @@ const post = (ctx, path, data) => ctx.request.post(`${origin}/api/${path}`, { da
 const getRoom = async pin => (await second.request.get(`${origin}/api/rooms/${pin}`)).json();
 const noOverflow = async p => assert.equal(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
 try {
-  await page.goto(origin); await page.getByRole("heading", { name: "Tham gia cuộc đua" }).waitFor(); await page.screenshot({ path: `${out}/home-desktop.png`, fullPage: true });
-  await phone.goto(origin); await phone.getByRole("heading", { name: "Tham gia cuộc đua" }).waitFor(); await noOverflow(phone); await phone.screenshot({ path: `${out}/home-mobile.png`, fullPage: true });
+  await page.goto(origin); await page.getByRole("heading", { name: "Vào cuộc cùng STAR." }).waitFor(); await page.screenshot({ path: `${out}/home-desktop.png`, fullPage: true });
+  await phone.goto(origin); await phone.getByRole("heading", { name: "Vào cuộc cùng STAR." }).waitFor(); await noOverflow(phone); await phone.screenshot({ path: `${out}/home-mobile.png`, fullPage: true });
   assert.equal((await post(student, "rooms", { title: "No permission", duration: 10 })).status(), 401); mark("Trang responsive, API tạo phòng bắt buộc đăng nhập");
   await page.goto(`${origin}/?view=admin`); await page.getByRole("link", { name: /Đăng nhập thử nghiệm/ }).click();
   await page.getByLabel("Tên phòng").fill("STAR River Club · Cuộc đua mùa mới"); await page.getByLabel("Thời lượng cuộc đua", { exact: true }).fill("20");
