@@ -57,7 +57,7 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
   useEffect(() => {
     const keydown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("input,textarea,select,button,[contenteditable=true],[role=dialog]") || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.defaultPrevented || target.closest("input,textarea,select,button,[contenteditable=true],[role=dialog],[role=menu],[role=listbox]") || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === "KeyM") { e.preventDefault(); toggleSound(); }
       if (e.code === "Space" && isHost && elapsed >= 0 && !finished && !replay) { e.preventDefault(); void onAction(paused ? "resume" : "pause"); }
     };
