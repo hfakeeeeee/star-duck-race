@@ -21,7 +21,7 @@ export const SCENES = [
   { id: "night", name: "Đêm ánh sao", icon: "🌙" },
 ] as const;
 export type SceneId = typeof SCENES[number]["id"];
-export type Player = { id: string; name: string; tokenHash: string; joinedAt: number; skin?: SkinId; lastReactAt?: number; isTest?: boolean };
+export type Player = { id: string; name: string; tokenHash: string; joinedAt: number; skin?: SkinId; avatar?: string; avatarUpdatedAt?: number; lastReactAt?: number; isTest?: boolean };
 export type Reaction = { id: string; playerId: string; kind: string; at: number };
 export type Race = {
   id: string; startAt: number; duration: number; order: string[]; seeds: Record<string, number>;
@@ -181,7 +181,7 @@ export function publicRoom(room: Room, now = Date.now()) {
   normalizeRoom(room); const state = stateOf(room, now); const r = room.race;
   const reveal = !!r && raceElapsed(r, now) >= r.duration;
   return { pin: room.pin, title: room.title, duration: room.duration, locked: room.locked, state, count: room.players.length, capacity: 200, serverNow: now, scene: room.scene!, distance: room.distance!,
-    players: room.players.map(({ id, name, joinedAt, skin, isTest }) => ({ id, name, joinedAt, skin: skin!, isTest: isTest === true })),
+    players: room.players.map(({ id, name, joinedAt, skin, isTest, avatar }) => ({ id, name, joinedAt, skin: skin!, isTest: isTest === true, ...(avatar ? { avatar } : {}) })),
     reactions: (room.reactions || []).filter(v => now - v.at < 6000),
     race: r ? { id: r.id, ready: r.ready === true, model: r.model ?? 2, startAt: r.startAt, duration: r.duration, seeds: r.seeds, normalizer: r.normalizer, slowest: r.slowest, tail: r.tail, lanes: r.lanes,
       pausedAt: r.pausedAt, pausedMs: r.pausedMs, endedEarly: r.endedEarly, order: reveal ? r.order : [], finishes: reveal ? Object.fromEntries(r.order.map(id => [id, finishTime(r, id)])) : {} as Record<string, number> } : null };

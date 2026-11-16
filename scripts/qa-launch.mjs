@@ -16,7 +16,8 @@ try {
   const room=await post("rooms",{title:"STAR · Chuẩn bị trước khi stream",duration:10,testCount:23}); pin=room.pin;
   await phone.goto(`${origin}/?room=${pin}`); await phone.getByLabel("Tên của bạn").fill("Người chơi điện thoại"); await phone.getByRole("button",{name:"Vào phòng chờ",exact:true}).click(); await phone.getByText("Vịt đã vào vị trí!").waitFor();
   await host.goto(`${origin}/?room=${pin}&host=1`); await host.getByRole("button",{name:"Vào đường đua",exact:true}).click();
-  for(const p of [host,phone]) { await p.locator('.race-scene[data-renderer="webgl"]').waitFor(); await p.locator(".hud-state").filter({hasText:"Chờ xuất phát"}).waitFor(); assert.ok(await p.locator(".live-standings").isVisible()); await fit(p); }
+  for(const p of [host,phone]) { await p.locator('.race-scene[data-renderer="webgl"]').waitFor(); await p.locator(".hud-state").filter({hasText:"Chờ xuất phát"}).waitFor(); assert.equal(await p.locator(".live-standings").isVisible(),false); await fit(p); }
+  for(const p of [host,phone]) await p.locator(".standings-toggle").click();
   const ready=await read(pin), before=await host.locator(".hud-timer strong").textContent(); assert.equal(ready.state,"ready"); assert.equal(ready.race.ready,true); assert.equal(await phone.getByRole("button",{name:"Bắt đầu cuộc đua",exact:true}).count(),0);
   const denied=await guest.request.post(`${origin}/api/rooms/${pin}/start`,{data:{},headers:{Origin:origin}}); assert.equal(denied.status(),401);
   await host.getByRole("button",{name:"Chế độ trình chiếu",exact:true}).click(); assert.ok(await host.locator(".live-standings").isVisible()); assert.ok(await host.getByRole("button",{name:"Bắt đầu cuộc đua",exact:true}).isVisible());
@@ -24,6 +25,7 @@ try {
   await host.waitForTimeout(12500); assert.equal((await read(pin)).state,"ready"); assert.equal(await host.locator(".hud-timer strong").textContent(),before);
   assert.ok((await host.locator(".live-name small").allTextContents()).every(t=>t==="0% đường đua"));
   await phone.reload(); await phone.locator(".race-ready-controls").waitFor(); assert.equal(await phone.locator(".hud-timer strong").textContent(),"00:10");
+  assert.equal(await phone.locator(".live-standings").isVisible(),false); await phone.locator(".standings-toggle").click();
   await host.getByRole("button",{name:"Bắt đầu cuộc đua",exact:true}).click(); await host.locator(".start-overlay").waitFor(); assert.equal((await read(pin)).race.id,ready.race.id); assert.equal((await read(pin)).race.ready,false);
   assert.ok(await host.locator(".presentation-mode").count()); assert.ok(await host.locator(".live-standings").isVisible());
   await host.locator(".start-overlay").waitFor({state:"hidden"}); await phone.locator(".start-overlay").waitFor({state:"hidden"}); await host.waitForTimeout(1600);
@@ -34,6 +36,6 @@ try {
   await phone.getByRole("dialog",{name:"Kết quả cuộc đua"}).waitFor();assert.equal(await host.locator(".results-heading h2").textContent(),await phone.locator(".results-heading h2").textContent());
   await host.getByRole("button",{name:"Đua lại",exact:true}).click();await host.getByRole("button",{name:"Vào đường đua",exact:true}).click();await host.locator(".race-ready-controls").waitFor();
   await host.getByRole("button",{name:"Về phòng chờ",exact:true}).click(); await phone.getByText("Vịt đã vào vị trí!").waitFor(); const returned=await read(pin);assert.equal(returned.state,"waiting");assert.equal(returned.count,24);assert.equal(returned.locked,false);
-  assert.deepEqual(errors,[]); await writeFile(`${out}/report.json`,JSON.stringify({passed:true,heldForSeconds:12.5,players:24,errors},null,2));console.log("PASS Prepared room stays frozen beyond race duration; launch inside stream; default live rankings; reload, two devices, mobile, pause, results and return to lobby");
+  assert.deepEqual(errors,[]); await writeFile(`${out}/report.json`,JSON.stringify({passed:true,heldForSeconds:12.5,players:24,errors},null,2));console.log("PASS Prepared room stays frozen beyond race duration; launch inside stream; hidden default rankings and manual toggle; reload, two devices, mobile, pause, results and return to lobby");
 } catch(e) { await host.screenshot({path:`${out}/failure.png`,fullPage:true});console.log(errors);throw e; }
 finally {if(pin)await post(`rooms/${pin}/close`).catch(()=>{});await browser.close();}

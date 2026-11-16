@@ -8,6 +8,12 @@ export function exportCSV(room: PublicRoom) {
 }
 export async function exportPNG(room: PublicRoom) {
   if (!room.race?.order.length) return;
+  const portraits = new Map<string, HTMLImageElement>();
+  await Promise.all(room.players.filter(p => p.avatar).map(p => new Promise<void>(resolve => {
+    const image = new Image(), timer = setTimeout(() => { image.src = ""; resolve(); }, 3000);
+    image.onload = () => { clearTimeout(timer); portraits.set(p.id, image); resolve(); };
+    image.onerror = () => { clearTimeout(timer); resolve(); }; image.src = p.avatar!;
+  })));
   const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = 340 + room.count * 44;
   const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("Trình duyệt chưa tạo được ảnh kết quả.");
   ctx.fillStyle = "#f8f9fc"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#172b63"; ctx.fillRect(0, 0, 1200, 230);
@@ -21,7 +27,9 @@ export async function exportPNG(room: PublicRoom) {
     const p = room.players.find(p => p.id === id)!; const t = room.race!.finishes[id], y = 314 + i * 44;
     ctx.fillStyle = i < 3 ? "#f7f0e2" : i % 2 ? "#ffffff" : "#f1f3f8"; ctx.fillRect(40, y - 26, 1120, 42);
     ctx.fillStyle = "#172b63"; ctx.font = `${i < 3 ? "bold " : ""}22px sans-serif`; ctx.fillText(String(i + 1).padStart(2, "0"), 75, y);
-    ctx.beginPath(); ctx.fillStyle = (SKINS.find(s => s.id === p.skin) || SKINS[0]).color; ctx.arc(145, y - 8, 10, 0, Math.PI * 2); ctx.fill();
+    const portrait = portraits.get(p.id);
+    if (portrait) { ctx.save(); ctx.beginPath(); ctx.arc(145, y - 8, 16, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(portrait, 129, y - 24, 32, 32); ctx.restore(); }
+    else { ctx.beginPath(); ctx.fillStyle = (SKINS.find(s => s.id === p.skin) || SKINS[0]).color; ctx.arc(145, y - 8, 10, 0, Math.PI * 2); ctx.fill(); }
     ctx.fillStyle = "#172b63"; ctx.fillText(p.name, 175, y); ctx.fillText(`${t.toFixed(3)} s`, 830, y); ctx.fillText(i ? `+${(t - room.duration).toFixed(3)} s` : "—", 1010, y);
   });
   const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png")); if (!blob) throw new Error("Chưa xuất được ảnh kết quả."); download(blob, `STAR-${room.pin}.png`);

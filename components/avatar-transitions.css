@@ -1,0 +1,57 @@
+.player-portrait { display: inline-flex; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 50%; overflow: hidden; background: var(--primary-light); border: 1px solid rgb(210 170 97 / 50%); }
+.player-portrait [data-slot="avatar-image"] { display: block; width: 100%; height: 100%; object-fit: cover; }
+.player-portrait [data-slot="avatar-fallback"] { display: grid; place-items: center; width: 100%; height: 100%; }
+.player-portrait .duck { width: 90%; }
+.join-identity, .viewport-app .own-duck-select.own-profile-select { display: grid; grid-template-columns: minmax(0,1fr) 154px; gap: 10px; align-items: start; }
+.join-identity > *, .own-profile-select > * { min-width: 0; }
+.join-identity .skin-picker-trigger, .own-profile-select .skin-picker-trigger { width: 100%; gap: 8px; }
+.join-identity .skin-change, .own-profile-select .skin-change { display: none; }
+.join-identity .skin-picker-trigger > span, .own-profile-select .skin-picker-trigger > span { min-width: 0; }
+.join-identity .skin-picker-trigger strong, .own-profile-select .skin-picker-trigger strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.avatar-picker { position: relative; min-width: 0; }
+.avatar-picker-trigger { width: 100%; min-height: 62px; display: flex; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--primary); text-align: left; }
+.avatar-picker-trigger:hover { border-color: var(--gold); background: var(--gold-light); }
+.avatar-picker-trigger > span:last-child { min-width: 0; }
+.avatar-picker-trigger strong { display: block; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.avatar-picker-trigger small { display: block; font-size: 9px; color: var(--muted); margin-top: 4px; }
+.avatar-preview { position: relative; flex: 0 0 32px; width: 32px; height: 34px; display: grid; place-items: center; }
+.avatar-preview > .duck { width: 32px; }
+.avatar-preview > svg:last-child:not(.duck) { position: absolute; bottom: -1px; right: -1px; background: var(--surface); border-radius: 50%; padding: 2px; box-sizing: content-box; }
+.avatar-remove { position: absolute; top: 1px; right: 1px; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 6px; color: var(--muted); background: var(--surface); }
+.avatar-remove:hover { color: var(--danger); }
+.avatar-error { font-size: 10px; line-height: 1.5; color: var(--danger); margin: 4px 0 0; }
+.avatar-spinner { animation: avatar-spin 1s linear infinite; }
+.live-standings .player-portrait { width: 31px; height: 31px; }
+.viewport-app .podium .award-duck > .player-portrait { width: 82px; height: 82px; }
+.viewport-app .podium .place-1 .award-duck > .player-portrait { width: 104px; height: 104px; }
+.final-table .player-portrait { width: 28px; height: 28px; }
+.viewport-app .player-chip > .player-portrait { width: 32px; height: 32px; min-width: 32px; flex: 0 0 32px; }
+.star-transition { position: fixed; inset: 0; z-index: 100; overflow: hidden; pointer-events: none; }
+.star-curtain { position: absolute; width: 240vmax; height: 240vmax; max-width: none; left: 50%; top: 50%; fill: var(--primary); stroke: var(--gold); stroke-width: .15; animation: star-curtain .86s cubic-bezier(.42,0,.18,1) both; }
+.star-transition-core { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; margin: -25px; color: var(--gold); animation: star-core .86s ease both; }
+.star-trail { position: absolute; top: 50%; left: 50%; margin: -8px; animation: star-trail .75s cubic-bezier(.2,.7,.3,1) both; }
+.viewport-app > main { animation: screen-enter .4s ease both; }
+@keyframes star-curtain { 0%,12% { transform: translate(-50%,-50%) scale(1) rotate(-12deg); } 65% { transform: translate(-50%,-50%) scale(.045) rotate(12deg); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(0) rotate(35deg); opacity: 0; } }
+@keyframes star-core { 0% { transform: scale(.4) rotate(-35deg); opacity: 0; } 28%,55% { transform: scale(1) rotate(0); opacity: 1; } 100% { transform: scale(1.3) rotate(35deg); opacity: 0; } }
+@keyframes star-trail { 0%,20% { transform: rotate(var(--angle)) translateX(12px) scale(0); opacity: 0; } 42% { opacity: 1; } 100% { transform: rotate(var(--angle)) translateX(var(--distance)) scale(.3); opacity: 0; } }
+@keyframes screen-enter { from { opacity: .4; } to { opacity: 1; } }
+@keyframes avatar-spin { to { rotate: 360deg; } }
+@media (max-width: 767px) {
+  .join-identity, .viewport-app .own-duck-select.own-profile-select { grid-template-columns: minmax(0,1fr) 138px; gap: 7px; }
+  .avatar-picker-trigger { min-height: 62px; gap: 6px; padding: 6px; }
+  .live-standings .player-portrait { width: 26px; height: 26px; }
+  .viewport-app .podium .award-duck > .player-portrait { width: 52px; height: 52px; }
+  .viewport-app .podium .place-1 .award-duck > .player-portrait { width: 64px; height: 64px; }
+}
+@media (max-width: 360px), (max-height: 480px) {
+  .join-identity, .viewport-app .own-duck-select.own-profile-select { grid-template-columns: minmax(0,1fr) 130px; }
+  .viewport-app .join-identity .skin-picker-trigger, .avatar-picker-trigger, .viewport-app .own-profile-select .skin-picker-trigger { min-height: 48px; padding: 5px 6px; }
+  .join-identity .skin-picker-trigger .duck, .own-profile-select .skin-picker-trigger .duck { width: 32px; }
+  .join-identity .skin-picker-trigger strong, .own-profile-select .skin-picker-trigger strong { font-size: 10px; }
+  .join-identity .skin-picker-trigger small, .own-profile-select .skin-picker-trigger small { font-size: 9px; }
+  .avatar-picker-trigger small { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .star-transition { display: none; }
+  .viewport-app > main, .avatar-spinner { animation: none; }
+}

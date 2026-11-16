@@ -30,6 +30,8 @@ Trang tham gia: `/`. Trang quản trị: `/?view=admin`. Nút **Đăng nhập th
 - Biểu cảm cổ vũ được đồng bộ (giới hạn 1 lần/1,5 giây/người), pháo giấy chiến thắng, hai bản nhạc tổng hợp gốc bằng Web Audio, âm báo đổi ngôi/xuất phát/chiến thắng và điều chỉnh âm lượng. Âm thanh mặc định bật; nếu trình duyệt chặn autoplay, AudioContext được mở ở lần chạm hoặc nhấn phím đầu tiên. Người dùng vẫn có nút tắt tiếng.
 - Hai mức đồ họa, mô hình vịt dùng instancing cho 200 người; có Canvas 2D nhẹ nếu thiết bị không hỗ trợ WebGL. Space để admin tạm dừng/tiếp tục, M bật/tắt âm thanh; phím tắt bỏ qua khi đang nhập dữ liệu.
 - Phòng và danh sách lưu trong D1; tải lại trang không mất dữ liệu. Token thiết bị lưu cục bộ, máy chủ chỉ lưu SHA-256. PIN hết hiệu lực sau 24 giờ.
+- Avatar ảnh tùy chọn (JPG/PNG/WebP, tối đa 5 MB): cắt giữa và thu gọn JPEG 128 px trước khi lưu R2. Bảng hạng/top 3/PNG hiện ảnh; trên sông vẫn là vịt. Có thể đổi/xóa ảnh trong phòng chờ.
+- Bảng hạng mặc định ẩn khi vào cuộc đua. Chuyển trang có hiệu ứng ngôi sao STAR, tự tắt khi người dùng bật giảm chuyển động.
 
 ## Đồng bộ và giới hạn
 

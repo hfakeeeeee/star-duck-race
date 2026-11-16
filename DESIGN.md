@@ -66,7 +66,7 @@ Trạng thái này giữ vịt đứng yên, chưa đếm ngược, không tự 
 Admin có thể chỉnh camera, bật trình chiếu rồi bấm Bắt đầu cuộc đua ngay trong màn game để đếm ngược 4 giây.
 Giữ nguyên ID cuộc đua khi xuất phát để camera, trình chiếu và lựa chọn bảng hạng không bị đặt lại.
 Admin có nút Về phòng chờ trước khi xuất phát; mọi người được giữ và phòng được mở khóa lại.
-Bảng hạng mặc định mở, kể cả trình chiếu; chỉ thu gọn khi người xem chủ động bấm.
+Bảng hạng mặc định ẩn khi vào đường đua, kể cả trình chiếu; người xem chủ động mở bằng nút Bảng hạng.
 Desktop dành cột riêng cho bảng hạng, điện thoại dùng dải gọn ở dưới; HUD co theo chiều cao mặt sông thực tế.
 
 ## Âm thanh và trao giải
@@ -81,3 +81,12 @@ Bảng xuất hiện sau cú bật và khi ba vịt đầu đã cán đích (ho�
 Bảng dùng liquid glass navy/gold, một lớp blur có fallback nền tối, thẻ thứ nhất ở giữa; giữ đọc được tên và thời gian trên nền đua.
 Nút đua lại chỉ bật khi toàn bộ lượt đã kết thúc. Xem lại, CSV/PNG và bảng đầy đủ vẫn hoạt động.
 Giảm chuyển động tắt cú bật và hiệu ứng mở bảng; tắt tiếng áp dụng cho nhạc, quack và các hiệu ứng cùng lúc.
+
+## Avatar và chuyển cảnh 17/11/2026
+
+Ảnh đại diện tùy chọn khi tham gia; có thể đổi hoặc xóa trong phòng chờ. Ảnh JPG/PNG/WebP tối đa 5 MB được cắt giữa, thu gọn JPEG 128 × 128 trước khi tải.
+Ảnh lưu trong R2, phòng chỉ giữ URL để polling 200 người vẫn nhẹ. Quyền đổi ảnh gắn với token của chính người chơi và bị khóa khi vào đường đua.
+Phòng chờ, bảng hạng trực tiếp, top 3, bảng kết quả và ảnh PNG dùng avatar; người chưa có ảnh hoặc ảnh lỗi vẫn hiện vịt.
+Mô hình trên sông, làn, quỹ đạo và cơ hội thắng giữ nguyên theo kiểu vịt đã chọn.
+Chuyển màn dùng màn quét ngôi sao navy/gold và các sao nhỏ tỏa ra trong 0,86 giây; không trì hoãn API hoặc đồng hồ đua.
+Không phát lại chuyển cảnh theo mỗi lần polling; giảm chuyển động tắt màn quét, trang vẫn chuyển ngay và nút thao tác không bị chặn.

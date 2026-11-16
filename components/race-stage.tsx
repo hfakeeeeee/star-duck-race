@@ -18,7 +18,7 @@ export default function RaceStage({ room, offset, ownId, isHost, busy, onAction,
   const [quality, setQuality] = useState<Quality>("auto"); const [labels, setLabels] = useState(true);
   const { audio, sound, volume, track, toggleSound, setVolume, setTrack } = useRaceSound();
   const [finishConfirm, setFinishConfirm] = useState(false); const [audioSettings, setAudioSettings] = useState(false);
-  const [boardOpen, setBoardOpen] = useState(true), [resultsOpen, setResultsOpen] = useState(true);
+  const [boardOpen, setBoardOpen] = useState(false), [resultsOpen, setResultsOpen] = useState(true);
   const [replay, setReplay] = useState(false); const [replayTime, setReplayTime] = useState(0); const [replayRunning, setReplayRunning] = useState(false); const [speed, setSpeed] = useState(.5);
   const [replaySeek, setReplaySeek] = useState(0);
   const cue = useRef(""); const lastLeader = useRef("");

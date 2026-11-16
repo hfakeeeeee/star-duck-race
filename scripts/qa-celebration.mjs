@@ -32,6 +32,8 @@ try{
   await page.screenshot({path:`${out}/lobby-music.png`,fullPage:true});
   await page.getByRole("button",{name:"Vào đường đua",exact:true}).click();await page.locator('.race-scene[data-renderer="webgl"]').waitFor();await page.waitForTimeout(600);
   assert.ok(await energy()>.0005,"Ready room must produce real audio");assert.ok(await page.evaluate(()=>window.__themes.includes("ready")));assert.equal(await page.evaluate(()=>window.__audio.length),1,"One shared AudioContext across phases");
+  assert.equal(await page.getByRole("button",{name:"Bảng hạng",exact:true}).getAttribute("aria-expanded"),"false");
+  await page.getByRole("button",{name:"Bảng hạng",exact:true}).click();
   for(const viewport of [{width:1440,height:1000},{width:375,height:812}]){
     await page.setViewportSize(viewport);await page.waitForTimeout(300);await noScroll();
     const layout=await page.evaluate(()=>{const pane=document.querySelector('.live-standings'),scene=document.querySelector('.race-scene'),arena=document.querySelector('.race-arena'),css=getComputedStyle(pane);return {blur:css.backdropFilter,background:css.backgroundImage,canvas:scene.clientWidth,height:scene.clientHeight,arena:arena.clientWidth,arenaHeight:arena.clientHeight};});

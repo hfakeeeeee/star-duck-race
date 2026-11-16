@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { addPlayer, cancelPreparation, cleanName, distanceValue, durationValue, endRace, normalizeRoom, pauseRace, prepareRace, publicRoom, RaceError, randomInt, resumeRace, sceneValue, setTestDucks, skinValue, startRace, stateOf, SKINS, type Room } from "../../../lib/race";
 import { validateNames } from "../../../lib/import-names";
+import { readAvatarBody } from "../../../lib/avatar";
 export const dynamic = "force-dynamic";
 type DBRow = { pin: string; data: string; version: number; expires_at: number };
 function json(body: unknown, status = 200) { return Response.json(body, { status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } }); }
@@ -31,12 +32,58 @@ async function hash(value: unknown) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, "0")).join("");
 }
+async function avatarUpload(req: Request, pin: string) {
+  const tokenHash = await hash(req.headers.get("x-player-token"));
+  const snapshot = JSON.parse((await row(pin)).data) as Room;
+  const editable = (room: Room) => {
+    if (room.closed) throw new RaceError("Phòng đã đóng.", 410);
+    if (room.race) throw new RaceError("Hãy đổi ảnh trong phòng chờ.", 409);
+    const player = room.players.find(p => p.tokenHash === tokenHash);
+    if (!player) throw new RaceError("Bạn không còn trong phòng này.", 403);
+    if (Date.now() - (player.avatarUpdatedAt || 0) < 1500) throw new RaceError("Chờ một chút trước khi đổi ảnh tiếp nhé.", 429);
+    return player;
+  };
+  const player = editable(snapshot), oldAvatar = player.avatar;
+  if (!env.BUCKET) throw new RaceError("Chưa thể tải ảnh lúc này. Vui lòng thử lại.", 503);
+  const remove = req.headers.get("x-remove-avatar") === "1";
+  let avatar: string | undefined, key: string | undefined;
+  if (!remove) {
+    if (req.headers.get("content-type") !== "image/jpeg") throw new RaceError("Vui lòng chọn ảnh JPG, PNG hoặc WebP.", 415);
+    const bytes = await readAvatarBody(req);
+    const imageId = crypto.randomUUID(); key = `avatars/${pin}/${player.id}/${imageId}.jpg`;
+    await env.BUCKET.put(key, bytes, { httpMetadata: { contentType: "image/jpeg" } });
+    avatar = `/api/rooms/${pin}/avatar/${player.id}/${imageId}`;
+  }
+  let room: Room;
+  try { room = await mutate(pin, room => { const target = editable(room); target.avatar = avatar; target.avatarUpdatedAt = Date.now(); }); }
+  catch (error) { if (key) await env.BUCKET.delete(key).catch(() => {}); throw error; }
+  if (oldAvatar) {
+    const old = oldAvatar.split("/");
+    await env.BUCKET.delete(`avatars/${pin}/${old[5]}/${old[6]}.jpg`).catch(() => {});
+  }
+  return json(publicRoom(room));
+}
+async function avatarRead(pin: string, playerId: string, imageId: string) {
+  const uuid = /^[a-f0-9-]{36}$/;
+  if (!uuid.test(playerId) || !uuid.test(imageId)) throw new RaceError("Không tìm thấy ảnh.", 404);
+  const room = JSON.parse((await row(pin)).data) as Room;
+  const path = `/api/rooms/${pin}/avatar/${playerId}/${imageId}`;
+  if (room.closed || !room.players.some(p => p.id === playerId && p.avatar === path)) throw new RaceError("Không tìm thấy ảnh.", 404);
+  const image = await env.BUCKET?.get(`avatars/${pin}/${playerId}/${imageId}.jpg`);
+  if (!image) throw new RaceError("Không tìm thấy ảnh.", 404);
+  return new Response(image.body, { headers: { "Content-Type": "image/jpeg", "Content-Length": String(image.size), "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff", "ETag": image.httpEtag } });
+}
 async function handle(req: Request) {
   try {
     const url = new URL(req.url); const parts = url.pathname.split("/").filter(Boolean).slice(1);
     if (req.method !== "GET" && req.headers.get("origin") !== url.origin) throw new RaceError("Yêu cầu không hợp lệ.", 403);
     if (req.method === "GET" && parts[0] === "me") return json({ admin: !!req.headers.get("oai-authenticated-user-id"), mock: true });
     if (parts[0] !== "rooms") return json({ error: "Không tìm thấy đường dẫn." }, 404);
+    if (parts[2] === "avatar") {
+      if (req.method === "POST" && parts.length === 3) return await avatarUpload(req, parts[1]);
+      if (req.method === "GET" && parts.length === 5) return await avatarRead(parts[1], parts[3], parts[4]);
+      throw new RaceError("Không tìm thấy đường dẫn.", 404);
+    }
     if (req.method === "GET" && !parts[1]) {
       const owner = identity(req);
       const result = await db().prepare("SELECT data FROM rooms WHERE expires_at > ? ORDER BY expires_at DESC LIMIT 100").bind(Date.now()).all<{ data: string }>();
